@@ -1,0 +1,8 @@
+zephyr_include_directories(.)
+file(GLOB app_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
+target_sources(app PRIVATE ${app_sources})
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thread_watchdog)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thread_com)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thread_operation)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/global_time)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thread_status)

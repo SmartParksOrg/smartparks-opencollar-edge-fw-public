@@ -1,0 +1,27 @@
+/ {
+    chosen{
+        /delete-property/ nordic,pm-ext-flash;
+    };
+
+    aliases{
+        external-flash = &external_flash;
+    };
+};
+
+&spi2{
+    external_flash: external_flash@0{
+        compatible = "jedec,spi-nor";
+        reg = <0>;
+        spi-max-frequency = <104000000>;
+
+        wp-gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+        hold-gpios = <&gpio0 23 GPIO_ACTIVE_LOW>;
+        has-dpd;
+        t-enter-dpd = <30>;
+        t-exit-dpd = <30>;
+    };
+};
+
+&en25qh32b{
+    status = "disabled";
+};

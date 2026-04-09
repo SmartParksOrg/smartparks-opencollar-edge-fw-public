@@ -1,0 +1,41 @@
+# Copyright (c) 2024 IRNAS Ltd
+# T5838 Digital Microphone
+
+menuconfig T5838
+	bool "T5838 mic"
+	default n
+    depends on I2C
+    select ENABLE_MIC
+	help
+	  Enable driver for T5838 Microphone.
+
+if T5838
+
+config T5838_CHANNELS
+	int "Number of channels"
+	default 1
+	range 1 2
+	help
+	  Configure the number of microphone channels. 1 = Mono, 2 = Stereo.
+
+config T5838_SAMPLE_RATE
+	int "Sampling frequency"
+	default 16000
+	range 12400 50000
+	help
+	  Set the microphones sampling frequency.
+
+config T5838_READ_TIMEOUT
+	int "Block reading timeout (ms)"
+	default 1000
+	range 1 1000
+	help
+	  Set the number of milliseconds to wait before reading a block of data. For optimal performance and data overflow avoidance change this setting along with the BLOCK_COUNT setting.
+
+config T5838_BLOCK_COUNT
+	int "Number of memory blocks"
+	default 4
+	help
+	  Set the number of memory blocks allocated for storing the sampled data. The size of each block is calculated based on the sampling rate and number of channels. Increasing this means that a longer sound recording can be made, but more RAM will be used.
+
+endif #T5838

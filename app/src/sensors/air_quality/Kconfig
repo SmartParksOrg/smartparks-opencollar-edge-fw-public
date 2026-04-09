@@ -1,0 +1,6 @@
+# COPYRIGHT NOTICE: (c) 2025 Irnas. All rights reserved.
+
+menuconfig AIR_QUALITY
+    bool "Air Quality Module"
+    default y
+    depends on BOARD_RANGEREDGE_AIRQ_NRF52840

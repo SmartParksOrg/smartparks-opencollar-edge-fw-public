@@ -1,0 +1,32 @@
+apps:
+  - name: open-collar
+    west-boards:
+      - rhinoedge_nrf52840
+      - rangeredge_nrf52840
+      - rhinopuck_nrf52840
+      - rhinopuck35_nrf52840
+      - collaredge_nrf52840
+      - freeedge_nrf52840
+      # - rangeredge_airq_nrf52840 - not built by CI release script because of BOSCH licenses.
+
+    build-types:
+      - type: debug
+        conf-files:
+          - debug.conf
+          - disable_mcuboot.conf
+      # - type: log # - Temporarily removed due to code capacity issues. Can be added back once issues are resolved.
+      #   conf-files:
+      #     - log_rtt.conf
+      - type: prov
+        conf-files:
+          - prov.conf
+
+samples:
+  - name: lr11xx-transceiver-update
+    west-boards:
+      - rhinoedge_nrf52840
+      - rangeredge_nrf52840
+      - rhinopuck_nrf52840
+      - rhinopuck35_nrf52840
+      - collaredge_nrf52840
+      - freeedge_nrf52840

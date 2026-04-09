@@ -1,0 +1,44 @@
+/ {
+    pins: pins {
+        compatible = "gpio-keys";
+		chg_status: chg_status {
+            gpios = <&gpio0 8 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        };
+    };
+
+    chosen{
+        /delete-property/ nordic,pm-ext-flash;
+    };
+
+    aliases{
+        external-flash = &external_flash;
+    };
+};
+
+&lr11xx {
+    rf-sw-enable = <(LR11XX_DIO5 | LR11XX_DIO6 | LR11XX_DIO7 | LR11XX_DIO8)>;
+    rf-sw-rx-mode = <(LR11XX_DIO5 | LR11XX_DIO7)>;  /* receive - LNA_LF0 path active */
+    rf-sw-tx-mode = <(LR11XX_DIO5 | LR11XX_DIO6 | LR11XX_DIO7)>;    /* send - PA_HP_LF active */
+    rf-sw-tx-hp-mode = <(LR11XX_DIO5 | LR11XX_DIO6 | LR11XX_DIO7)>; /* PA_HP_LF path */
+    rf-sw-wifi-mode = <LR11XX_DIO5>;    /* WIFI_ANT path active - selected 2.4G path */
+    rf-sw-tx-hf-mode = <LR11XX_DIO5>;    /* Same as Wifi path, selected 2.4G path */
+    rf-sw-gnss-mode = <LR11XX_DIO8>;    /* GPS_LNA enable */
+};
+
+&spi2{
+    external_flash: external_flash@0{
+        compatible = "jedec,spi-nor";
+        reg = <0>;
+        spi-max-frequency = <104000000>;
+
+        wp-gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+        hold-gpios = <&gpio0 23 GPIO_ACTIVE_LOW>;
+        has-dpd;
+        t-enter-dpd = <30>;
+        t-exit-dpd = <30>;
+    };
+};
+
+&en25qh32b{
+    status = "disabled";
+};

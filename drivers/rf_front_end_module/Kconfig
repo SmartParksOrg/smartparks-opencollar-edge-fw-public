@@ -1,0 +1,13 @@
+menuconfig RF_FRONT_END_MODULE
+    bool "RF_FRONT_END_MODULE"
+    default n
+    help
+      This option enables the RF_FRONT_END_MODULE driver support.
+
+if RF_FRONT_END_MODULE
+
+module = RF_FRONT_END_MODULE
+module-str = rf_front_end_module
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # RF_FRONT_END_MODULE

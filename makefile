@@ -1,0 +1,144 @@
+# This is a default makefile for the Zephyr project, that is supposed to be
+# initialized with West and built with East.
+#
+# This makefile in combination with the Github actions does the following:
+# * Installs python dependencies and toolchain
+# * Initializes the project with West and updates it
+# * Runs east release
+# If the _build_ is running due to the release creation, then the following also
+# happens:
+# * Creates 'artifacts' folder,
+# * Copies release zip files and extra release notes files into it.
+#
+# Downloaded West modules, toolchain and nrfutil-toolchain-manager are cached in
+# CI after the first time the entire build is run.
+#
+# The assumed precondition is that the repo was setup with below commands:
+# mkdir -p <project_name>/project
+# cd <project_name>/project
+# git clone <project_url> .
+#
+# Every target assumes that is run from the repo's root directory, which is
+# <project_name>/project.
+
+install-dep:
+	east install nrfutil-toolchain-manager
+
+project-setup:
+	# Make a West workspace around this project
+	east init -l .
+	# Use a faster update method
+	east update -o=--depth=1 -n
+	east install toolchain
+	# Apply patches
+	make apply-patches
+
+apply-patches:
+	# Patch Zephyr
+	cd ../zephyr && git reset --hard && git clean -fd
+	cd ../zephyr && git apply ../project/patches/flash_spi_nor_driver_power_management.patch
+
+# Generate version file for each app
+# If multiple apps are present, this target should call the version script
+# once for each app
+gen-version:
+	./scripts/version/version.py --file ./app/VERSION
+
+pre-build: gen-version
+	echo "Pre-build"
+
+# Runs on every push to the main branch
+# Runs `east clean` between every build, due to some artifacts persisting between builds
+quick-build:
+	east build -p -b rhinoedge_nrf52840 app
+	east clean
+	east build -p -b rangeredge_nrf52840 app
+	east clean
+	east build -p -b rhinopuck_nrf52840 app
+	east clean
+	east build -p -b rhinopuck35_nrf52840 app
+	east clean
+	east build -p -b collaredge_nrf52840 app
+	east clean
+	east build -p -b freeedge_nrf52840 app
+	east clean
+
+# Runs on every PR and when doing releases
+release:
+	# Change east.yml to control what is built.
+	east release
+
+# Pre-package target is only run in release process.
+pre-package:
+	mkdir -p artifacts
+	cp release/*.zip artifacts
+	cp scripts/ttn_decoder.js artifacts
+	cp scripts/settings/settings.json artifacts
+	cp scripts/pre_changelog.md artifacts
+	cp scripts/post_changelog.md artifacts
+	make pre-package-rename-artifacts VERSION=$(VERSION)
+
+pre-package-rename-artifacts:
+	mv artifacts/ttn_decoder.js artifacts/ttn_decoder-$(VERSION).js
+	mv artifacts/settings.json artifacts/settings-$(VERSION).json
+
+test:
+	east twister -T tests --coverage -p native_sim --coverage-tool lcov
+
+# Used to run twister on remote RPi with attached nRF52840DK
+# The {RPI_IP} variable must be set in the environment using Github Secrets
+test-remote:
+	east twister -T tests -p rangeredge_nrf52840 --device-testing --device-serial-pty="scripts/rpi-jlink-server/twister_pty.py --host ${RPI_IP} --port 7777" --west-runner=jlink --west-flash="--tool-opt=ip ${RPI_IP}:7778"
+
+test-report-ci:
+	junit2html twister-out/twister.xml twister-out/twister-report.html
+
+# Intended to be used by developer, use 'pip install junit2html' to install
+# tooling
+test-report: test-report-ci
+	firefox twister-out/twister-report.html
+
+# Twister's coverage report by default includes all Zephyr sources, which is not
+# what we want. Below coverage-report-ci target removes all Zephyr sources from
+# coverage.info and generates a new coverage report.
+REMOVE_DIR = $(shell realpath $(shell pwd)/../zephyr)
+
+# This target is used in CI. It differs from coverage-report target in that it
+# removes "project/" from the paths in coverage.info, so that the GitHub action
+# that makes the coverage report can create proper links to the source files.
+coverage-report-ci:
+	rm -fr twister-out/coverage
+	lcov -q --remove twister-out/coverage.info "${REMOVE_DIR}/*" -o twister-out/coverage.info  --rc lcov_branch_coverage=1
+
+# Intended to be used by developer
+coverage-report: coverage-report-ci
+	genhtml -q --output-directory twister-out/coverage --ignore-errors source --branch-coverage --highlight --legend twister-out/coverage.info
+	firefox twister-out/coverage/index.html
+
+# CodeChecker section
+# build and check targets are run on every push to the `main` and in PRs.
+# store target is run only on the push to `main`.
+# diff target is run only in PRs.
+#
+# Important: If building more projects, make sure to create separate build
+# directories with -d flag, so they can be analyzed separately, see examples
+# below.
+codechecker-build:
+	east build -b rangeredge_nrf52840 app -d build_app
+	east build -b rangeredge_nrf52840 app -u debug -d build_debug
+	east build -b rangeredge_nrf52840 app -u prov -d build_prov
+
+codechecker-check:
+	east codechecker check -d build_app
+	east codechecker check -d build_debug
+	east codechecker check -d build_prov
+
+codechecker-store:
+	east codechecker store -d build_app
+	east codechecker store -d build_debug
+	east codechecker store -d build_prov
+
+# Specify build folders that you want to analyze to the script as positional
+# arguments, open it to learn more.
+codechecker-diff:
+	scripts/codechecker-diff.sh build_app build_debug build_prov

@@ -1,0 +1,4 @@
+menuconfig LP0_COMMUNICATION
+  bool "Enable LP0 communication"
+  select LORA_IRQ_HANDLER
+  select LORAWAN_TOOLS

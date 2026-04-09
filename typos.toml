@@ -1,0 +1,16 @@
+[default]
+locale = "en-us"
+check-filename = true
+check-file = true
+extend-ignore-identifiers-re = ["\\b[a-zA-Z0-9_]*ths[a-zA-Z0-9_]*\\b"]
+
+[default.extend-words]
+rsource = "rsource"
+dout = "dout"
+dout-gpios = "dout-gpios"
+ser = "ser"
+EXTRAVERSION = "EXTRAVERSION"
+THA = "THA"
+BA = "BA"
+NED = "NED"
+EXTINT = "EXTINT"

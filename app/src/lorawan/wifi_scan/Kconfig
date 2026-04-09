@@ -1,0 +1,76 @@
+menuconfig LR_WIFI_SCAN
+    bool "LR_WIFI_SCAN"
+    depends on LR11XX_LIB
+    default n
+    help
+      This option enables the LR_WIFI_SCAN driver support.
+      This driver is used to scan the available WiFi networks.
+
+if LR_WIFI_SCAN
+
+config LR_WIFI_SCAN_MODE
+    int "LR_WIFI_SCAN_MODE"
+    default 2
+    help
+      This option sets the LR_WIFI_SCAN mode.
+      1: LR11XX_WIFI_SCAN_MODE_BEACON
+      2: LR11XX_WIFI_SCAN_MODE_BEACON_AND_PKT
+      4: LR11XX_WIFI_SCAN_MODE_FULL_BEACON
+      5: LR11XX_WIFI_SCAN_MODE_UNTIL_SSID
+
+config LR_WIFI_SCAN_RESULT_FORMAT
+    int "LR_WIFI_SCAN_RESULT_FORMAT"
+    default 0
+    help
+      This option sets the LR_WIFI_SCAN result format.
+      0: LR11XX_WIFI_RESULT_FORMAT_BASIC_COMPLETE
+      1: LR11XX_WIFI_RESULT_FORMAT_BASIC_MAC_TYPE_CHANNEL
+      2: LR11XX_WIFI_RESULT_FORMAT_EXTENDED_FULL
+
+config LR_WIFI_SCAN_SIGNAL_TYPE
+    int "LR_WIFI_SCAN_SIGNAL_TYPE"
+    default 4
+    help
+      This option sets the LR_WIFI_SCAN signal type.
+      1: LR11XX_WIFI_TYPE_SCAN_B
+      2: LR11XX_WIFI_TYPE_SCAN_G
+      3: LR11XX_WIFI_TYPE_SCAN_N
+      4: LR11XX_WIFI_TYPE_SCAN_B_G_N
+
+config LR_WIFI_SCAN_CHANNEL_MASK
+    int "LR_WIFI_SCAN_CHANNEL_MASK"
+    default 16383
+    help
+      This option sets the LR_WIFI_SCAN channel mask.
+      It is expressed as 16 bits mask of channels. 0x3FFF - all channels.
+
+config LR_WIFI_SCAN_MAX_RESULTS
+    int "LR_WIFI_SCAN_MAX_RESULTS"
+    default 12
+    help
+      This option sets the LR_WIFI_SCAN max results.
+      Max is 32.
+
+config LR_WIFI_SCAN_NB_SCAN_PER_CHANNEL
+    int "LR_WIFI_SCAN_NB_SCAN_PER_CHANNEL"
+    default 2
+    help
+      This option sets the number of scans per channel.
+
+config LR_WIFI_SCAN_TIMEOUT_PER_SCAN_MS
+    int "LR_WIFI_SCAN_TIMEOUT_PER_SCAN_MS"
+    default 110
+    help
+      This option sets the timeout per scan in ms.
+
+config LR_WIFI_SCAN_ABORT_ON_TIMEOUT
+    bool "LR_WIFI_SCAN_ABORT_ON_TIMEOUT"
+    default y
+    help
+      Indicate if scan on one channel should stop on the first preamble search timeout detected.
+
+module = LR_WIFI_SCAN
+module-str = lr_wifi_scan
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # LR_WIFI_SCAN

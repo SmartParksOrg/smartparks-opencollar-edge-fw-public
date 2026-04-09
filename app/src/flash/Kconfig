@@ -1,0 +1,10 @@
+# COPYRIGHT NOTICE: (c) 2022 Irnas. All rights reserved.
+
+menuconfig FLASH_MODULE
+    bool "Flash config options"
+    # Enable UART driver
+    depends on SPI && !MCUBOOT
+    default n
+    select SPI_FLASH_EN25
+    select FLASH
+    select FLASH_PAGE_LAYOUT

@@ -1,0 +1,10 @@
+# VM3011 Digital MEMS Microphone
+
+
+menuconfig VM1010
+	bool "VM1010 mic"
+	default n
+    depends on I2C
+    select ENABLE_MIC
+	help
+	  Enable driver for VM1010 analog Microphone.

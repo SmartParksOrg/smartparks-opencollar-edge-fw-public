@@ -1,0 +1,8 @@
+# COPYRIGHT NOTICE: (c) 2022 Irnas. All rights reserved.
+
+menuconfig FENCE_PORT
+    bool "Fence port module"
+    default n
+    depends on BOARD_RANGEREDGE_NRF52840 || BOARD_RANGEREDGE_AIRQ_NRF52840
+    depends on !MCUBOOT
+    select ADC

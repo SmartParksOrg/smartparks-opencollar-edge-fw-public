@@ -1,0 +1,22 @@
+identifier: rangeredge_nrf52840
+name: nRF52840-DK-NRF52840
+type: mcu
+arch: arm
+ram: 256
+flash: 1024
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - adc
+  - arduino_i2c
+  - ble
+  - counter
+  - i2c
+  - ieee802154
+  - spi
+  - uart
+  - usb_cdc
+  - usb_device
+  - watchdog

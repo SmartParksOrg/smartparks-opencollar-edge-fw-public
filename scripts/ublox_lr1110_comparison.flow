@@ -1,0 +1,151 @@
+[
+    {
+        "id": "88a4191f.247618",
+        "type": "ttn uplink",
+        "z": "277278ea.bf515",
+        "name": "lacuna_lib-test",
+        "app": "74bc3c2a.25a884",
+        "dev_id": "",
+        "field": "",
+        "x": 270,
+        "y": 840,
+        "wires": [
+            [
+                "11f94b22.d07de5",
+                "91c0c4ee.c23538",
+                "814c99a9.3fe17"
+            ]
+        ]
+    },
+    {
+        "id": "11f94b22.d07de5",
+        "type": "function",
+        "z": "277278ea.bf515",
+        "name": "Prepare request",
+        "func": "if(msg.port == 1)\n{\n\n    var URL = \"https://gls.loracloud.com/api/v3/solve/gnss_lr1110_singleframe\" \n    var AUTH_TOKEN = \"AQEAjN9V8sDHZRTuLMT7Q0SmXsS2LBIpdPzGH98zBlp68T89elcT\"\n    var LAT = msg.payload.latitude\n    var LON = msg.payload.longitude\n    var nav_payload = msg.payload.nav_payload\n    var gps_time = msg.payload.gps_time\n    \n    var json_dict = {\n        \"payload\": nav_payload,\n        \"gnss_capture_time\": gps_time,\n        \"gnss_capture_time_accuracy\": 17, \n        \"gnss_assist_position\" : [LAT, LON]\n    }\n    var headers = {\n        'Accept':'application/json',\n        'Ocp-Apim-Subscription-Key': AUTH_TOKEN\n    }\n    \n    msg = {\n        \"url\": URL,\n        \"headers\": headers,\n        \"payload\": json_dict\n    }\n    \n    return msg;\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 460,
+        "y": 840,
+        "wires": [
+            [
+                "1987f67d.ed0f42"
+            ]
+        ]
+    },
+    {
+        "id": "1987f67d.ed0f42",
+        "type": "http request",
+        "z": "277278ea.bf515",
+        "name": "Lora Cloud GNSS",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": false,
+        "url": "https://gls.loracloud.com/api/v3/solve/gnss_lr1110_singleframe",
+        "tls": "",
+        "proxy": "",
+        "authType": "basic",
+        "x": 670,
+        "y": 840,
+        "wires": [
+            [
+                "132d168c.449731",
+                "369e923e.195cf6"
+            ]
+        ]
+    },
+    {
+        "id": "132d168c.449731",
+        "type": "function",
+        "z": "277278ea.bf515",
+        "name": "Parse response",
+        "func": "var object = JSON.parse(msg.payload)\n\nmsg.payload = [{\n    lat:   object.result.llh[0],\n    lon:   object.result.llh[1],\n    gdop:   object.result.gdop,\n    accuracy:   object.result.accuracy,\n},\n{ \n    devId: \"nordic_test\"\n}]\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 880,
+        "y": 840,
+        "wires": [
+            [
+                "3fb6a1e2.d4f056"
+            ]
+        ]
+    },
+    {
+        "id": "3fb6a1e2.d4f056",
+        "type": "influxdb out",
+        "z": "277278ea.bf515",
+        "influxdb": "64c02983.07fc78",
+        "name": "IrnasLacuna",
+        "measurement": "lacuna_lib-test",
+        "precision": "",
+        "retentionPolicy": "",
+        "x": 1110,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "91c0c4ee.c23538",
+        "type": "function",
+        "z": "277278ea.bf515",
+        "name": "Format ublox data",
+        "func": "if(msg.port == 2)\n{\n    if(msg.payload.latitude !== 0 || msg.payload.longitude !== 0 || msg.payload.altitude !== 0)\n    {\n        msg.payload = [{\n            ublox_lat:        msg.payload.latitude,\n            ublox_lon:        msg.payload.longitude,\n            ublox_alt:        msg.payload.altitude,\n        },\n        { \n            devId: msg.dev_id\n        }]\n    \n        return msg;\n    }\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 470,
+        "y": 880,
+        "wires": [
+            [
+                "3fb6a1e2.d4f056"
+            ]
+        ]
+    },
+    {
+        "id": "369e923e.195cf6",
+        "type": "debug",
+        "z": "277278ea.bf515",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 930,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "814c99a9.3fe17",
+        "type": "debug",
+        "z": "277278ea.bf515",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 450,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "74bc3c2a.25a884",
+        "type": "ttn app",
+        "z": "",
+        "appId": "lacuna_lib-test",
+        "accessKey": "ttn-account-v2.fnp-mHAfoPEu54R1TB_sCPZUR6Qs0UNFaCX_ZdCtoMY",
+        "discovery": "discovery.thethingsnetwork.org:1900"
+    },
+    {
+        "id": "64c02983.07fc78",
+        "type": "influxdb",
+        "z": "",
+        "hostname": "127.0.0.1",
+        "port": "8086",
+        "protocol": "http",
+        "database": "IrnasLacuna",
+        "name": "",
+        "usetls": false,
+        "tls": ""
+    }
+]

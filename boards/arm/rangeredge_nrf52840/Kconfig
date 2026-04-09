@@ -1,0 +1,34 @@
+# nRF52840 DK NRF52840 board configuration
+
+# Copyright (c) 2016 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+rsource "../../../app/src/satellite/Kconfig"
+rsource "../../../app/src/sensors/fence_port/common/Kconfig"
+rsource "../../../app/src/sensors/Kconfig"
+rsource "../../../app/src/lorawan/wifi_scan/Kconfig"
+rsource "../../../app/src/lorawan/lr_s_band/Kconfig"
+
+
+config BOARD_ENABLE_DCDC
+	bool "Enable DCDC mode"
+	select SOC_DCDC_NRF52X
+	default y
+	depends on BOARD_RANGEREDGE_NRF52840
+
+
+menu "mic"
+    rsource "../../../app/src/mic/Kconfig"
+
+    config MIC_VM3011_PDM
+        bool "Select configs for PDM"
+        depends on !MCUBOOT
+        select AUDIO
+        select AUDIO_DMIC
+        select AUDIO_DMIC_NRFX_PDM
+        select NRFX_PDM
+        default n
+        help
+	        "Select PDM configs"
+
+endmenu

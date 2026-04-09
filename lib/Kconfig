@@ -1,0 +1,4 @@
+rsource "lora_irq_handler/Kconfig"
+rsource "lp0_communication/Kconfig"
+rsource "lorawan_tools/Kconfig"
+rsource "sdfs_uart/Kconfig"

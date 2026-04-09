@@ -1,0 +1,8 @@
+
+module = LP0
+module-str = lp0 wrapper
+source "subsys/logging/Kconfig.template.log_config"
+
+rsource "lp0_offload/Kconfig"
+
+# LUKATODO:TODO-FUTURE: add KCONFIG FOR SD CARD WRITER SUPPORT AND ADD IT TO BOARD DEFCONFIG

@@ -1,0 +1,13 @@
+menuconfig LR_S_BAND
+    bool "LR_S_BAND"
+    default n
+    help
+      This option enables the LR_S_BAND driver support.
+
+if LR_S_BAND
+
+module = LR_S_BAND_MODULE
+module-str = lr_s_band_module
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # LR_S_BAND

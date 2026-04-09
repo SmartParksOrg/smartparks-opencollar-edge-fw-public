@@ -1,0 +1,12 @@
+# Copyright (c) 2024 IRNAS Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+rsource "vm3011/Kconfig"
+rsource "vm1010/Kconfig"
+rsource "t5838/Kconfig"
+
+menuconfig ENABLE_MIC
+    bool "Device Mic"
+    default n
+    help
+        Enable mic support. Selected by VM1010, VM3011 or T5838 config.

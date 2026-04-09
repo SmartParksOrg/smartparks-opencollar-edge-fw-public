@@ -1,0 +1,18 @@
+# Copyright (c) 2023, IRNAS d.o.o.
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  AK-SDFS-UART module communication interface.
+
+compatible: "irnas,ak-sdfs-uart"
+
+include: "uart-device.yaml"
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO connected to the reset pin of the AK-SDFS-UART module.
+      This pin must be active-low as required by the AK-SDFS-UART module
+      (>5 ms pulse to trigger).

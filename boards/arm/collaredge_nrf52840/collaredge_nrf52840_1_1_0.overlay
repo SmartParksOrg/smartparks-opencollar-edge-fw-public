@@ -1,0 +1,18 @@
+/ {
+    pins: pins {
+        compatible = "gpio-keys";
+		chg_status: chg_status {
+            gpios = <&gpio0 8 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        };
+    };
+};
+
+&lr11xx {
+    rf-sw-enable = <(LR11XX_DIO5 | LR11XX_DIO6 | LR11XX_DIO8)>; /* DIO 7 not used */
+    rf-sw-rx-mode = <LR11XX_DIO5>;  /* receive - LNA_LF0 path active */
+    rf-sw-tx-mode = <(LR11XX_DIO5 | LR11XX_DIO6)>; /* send - PA_HP_LF active */
+    rf-sw-tx-hp-mode = <(LR11XX_DIO5 | LR11XX_DIO6)>;
+    /delete-property/ rf-sw-tx-hf-mode;
+    /delete-property/ rf-sw-wifi-mode;
+    rf-sw-gnss-mode = <LR11XX_DIO8>;  /* GPS_LNA enable */
+};

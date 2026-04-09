@@ -1,0 +1,6 @@
+zephyr_include_directories(.)
+file(GLOB app_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
+target_sources(app PRIVATE ${app_sources})
+add_subdirectory_ifdef(CONFIG_VM1010 ${CMAKE_CURRENT_SOURCE_DIR}/vm1010)
+add_subdirectory_ifdef(CONFIG_VM3011 ${CMAKE_CURRENT_SOURCE_DIR}/vm3011)
+add_subdirectory_ifdef(CONFIG_T5838 ${CMAKE_CURRENT_SOURCE_DIR}/t5838)

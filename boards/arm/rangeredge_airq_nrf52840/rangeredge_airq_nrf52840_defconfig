@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: Apache-2.0
+
+CONFIG_SOC_SERIES_NRF52X=y
+CONFIG_SOC_NRF52840_QIAA=y
+CONFIG_BOARD_RANGEREDGE_AIRQ_NRF52840=y
+
+# Enable MPU
+CONFIG_ARM_MPU=y
+
+# Enable GPIO
+CONFIG_GPIO=y
+
+# sensors
+# For some reason we must have config selection there, as we cannot make it work with MCUBOOT in sensors KConfig file
+# EvaTODO - we want to remove that!
+CONFIG_LIS2DW12_SENSOR=y
+CONFIG_IRNAS_LIS2DW12=y
+CONFIG_IRNAS_LIS2DW12_TRIGGER_GLOBAL_THREAD=y
+# CONFIG_IRNAS_LIS2DW12_FREE_FALL=y
+# CONFIG_IRNAS_LIS2DW12_TAP=y
+CONFIG_IRNAS_LIS2DW12_MOTION_DETECTION=y
+CONFIG_SENSOR_LOG_LEVEL_DBG=n
+
+# Battery
+CONFIG_NFCT_PINS_AS_GPIOS=y
+
+# Pin control
+CONFIG_PINCTRL=y
+
+# WiFi scan
+CONFIG_LR_WIFI_SCAN=y
+
+CONFIG_FP_HARDABI=y
+CONFIG_FPU=y
+
+CONFIG_NEWLIB_LIBC=y
+CONFIG_NEWLIB_LIBC_NANO=y
+CONFIG_ERRNO=y
+
+CONFIG_MAIN_STACK_SIZE=50000
+CONFIG_SENSOR=y
+CONFIG_SERIAL=y
+CONFIG_I2C=y
+
+# Enable BME68X driver
+CONFIG_IRNAS_BME69X=y
+
+# Enable BMV080 driver
+CONFIG_IRNAS_BMV080=y
+
+# BSEC library configuration - start
+CONFIG_BSEC_LIB=y
+
+####################################################
+# Disable all features we do not use to save space #
+####################################################
+
+# Lorawan: Enable only EU868 region
+CONFIG_LORA_BASICS_MODEM_REGION_EU_868=y
+
+# Lorawan: Disable all other regions
+CONFIG_LORA_BASICS_MODEM_ENABLE_ALL_REGIONS=n
+
+# Disable CMDQ
+CONFIG_BT_CMDQ=n
+
+# Disable Outdoor detection
+CONFIG_OUTDOOR_DETECTION=n
+
+# Enable SDFS UART module (external SD card over UART)
+CONFIG_SDFS_UART_MODULE=y

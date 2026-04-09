@@ -1,0 +1,14 @@
+# COPYRIGHT NOTICE: (c) 2022 Irnas. All rights reserved.
+
+menuconfig LIS2DW12_SENSOR
+    bool "lis2dw12 config options"
+    depends on !MCUBOOT
+    default n
+    select GPIO
+    select I2C
+    select SENSOR
+    # For some reason we cannot have config selection there,a s we cannot make it work with MCUBOOT
+    #select IRNAS_LIS2DW12
+    #select IRNAS_LIS2DW12_TRIGGER_GLOBAL_THREAD
+    #select IRNAS_LIS2DW12_MOTION_DETECTION
+    #select SENSOR_LOG_LEVEL_DBG

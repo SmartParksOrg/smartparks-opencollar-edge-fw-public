@@ -1,0 +1,4 @@
+
+module = LORAWAN
+module-str = lorawan wrapper
+source "subsys/logging/Kconfig.template.log_config"

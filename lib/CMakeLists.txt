@@ -1,0 +1,5 @@
+add_subdirectory_ifdef(CONFIG_SDFS_UART_MODULE sdfs_uart)
+add_subdirectory_ifdef(CONFIG_LORA_IRQ_HANDLER lora_irq_handler)
+add_subdirectory_ifdef(CONFIG_LP0_COMMUNICATION lp0_communication)
+add_subdirectory_ifdef(CONFIG_LORAWAN_TOOLS lorawan_tools)
+add_subdirectory(uart_pm)

@@ -1,0 +1,70 @@
+/ {
+    zephyr,user {
+		io-channels = <&adc 1>;
+	};
+
+    vbatt {
+		compatible = "irnas,voltage-divider";
+		io-channels = <&adc 2>;
+		lower-resistor-ohms = <390>;
+		upper-resistor-ohms = <220>;
+		power-gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>;
+        power-startup-delay-ms=<200>;
+        status = "okay";
+	};
+
+    pins: pins {
+        compatible = "gpio-keys";
+        fence_port_gpio: fence_port_gpio {
+            gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+        };
+        fence_port_analog: fence_port_analog {
+            gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+        };
+    };
+
+    nrf52_rx  {
+        compatible = "irnas,peripheral-power";
+        power-gpios = <&gpio1 8 (GPIO_PULL_DOWN |GPIO_ACTIVE_HIGH)>;
+        status = "okay";
+        initial-state = <0>;
+        configure-input;
+    };
+
+    nrf52_tx  {
+        compatible = "irnas,peripheral-power";
+        power-gpios = <&gpio0 14 (GPIO_PULL_DOWN |GPIO_ACTIVE_HIGH)>;
+        status = "okay";
+        initial-state = <0>;
+        configure-input;
+    };
+};
+
+&adc {
+	status = "okay";
+
+    #address-cells = <1>;
+	#size-cells = <0>;
+
+    channel@1 {
+		reg = <1>;
+		zephyr,gain = "ADC_GAIN_1_6";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>; /* 10 us by defoult */
+		zephyr,input-positive = <NRF_SAADC_AIN1>; /* P0.03 */
+		zephyr,resolution = <12>;
+        zephyr,vref-mv = <2800>;
+	};
+};
+
+&i2c0 {
+    // microphone:
+    vm3011: vm3011@60 {
+        compatible = "vesper,vm3011";
+        reg = <0x60>;
+
+        data-pin = <46>;
+        clk-pin = <45>;
+        dout-gpios = <&gpio1 9 (GPIO_ACTIVE_HIGH)>;
+    };
+};

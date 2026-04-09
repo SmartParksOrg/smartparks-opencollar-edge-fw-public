@@ -1,0 +1,59 @@
+&spi0 {
+	status = "disabled";
+};
+
+&spi1 {
+    status = "disabled";
+};
+
+
+&spi2 {
+    status = "okay";
+	sck-pin= <47>;
+	mosi-pin = <45>;
+	miso-pin= <46>;
+    cs-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+};
+
+
+&spi3 {
+    status = "disabled";
+};
+
+&flash0 {
+	/*
+	 * For more information, see:
+	 * http://docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
+	 */
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			reg = <0x000000000 0x0000C000>;
+		};
+		slot0_partition: partition@c000 {
+			reg = <0x0000C000 0x00067000>;
+		};
+		slot1_partition: partition@73000 {
+			reg = <0x00073000 0x00067000>;
+		};
+		scratch_partition: partition@da000 {
+			reg = <0x000da000 0x0001e000>;
+		};
+
+		/*
+		 * The flash starting at 0x000f8000 and ending at
+		 * 0x000fffff is reserved for use by the application.
+		 */
+
+		/*
+		 * Storage partition will be used by FCB/LittleFS/NVS
+		 * if enabled.
+		 */
+		storage_partition: partition@f8000 {
+			reg = <0x000f8000 0x00008000>;
+		};
+	};
+};

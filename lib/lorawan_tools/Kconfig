@@ -1,0 +1,4 @@
+menuconfig LORAWAN_TOOLS
+  bool "Enable LoRaWAN tools"
+  help
+    Enable LoRaWAN tools for building and parsing lora packets.

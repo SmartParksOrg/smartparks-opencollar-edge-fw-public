@@ -1,0 +1,8 @@
+board_check_revision(
+  FORMAT
+  MAJOR.MINOR.PATCH
+  VALID_REVISIONS
+  1.4.0
+  EXACT
+  DEFAULT_REVISION
+  1.4.0)

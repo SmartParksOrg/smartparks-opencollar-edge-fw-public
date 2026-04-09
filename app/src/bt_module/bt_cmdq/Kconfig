@@ -1,0 +1,9 @@
+menu "BT_CMDQ"
+
+config BT_CMDQ
+    bool "Enable Bluetooth CMDQ module"
+    default y
+    help
+        Enable the Bluetooth Cardiac monitoring device Q (CMDQ) module.
+
+endmenu

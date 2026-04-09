@@ -1,0 +1,16 @@
+menuconfig SDFS_UART_MODULE
+    bool "SDFS UART Handler Library"
+    select SERIAL
+    select UART_USE_RUNTIME_CONFIGURE
+    help
+      Enables the SDFS UART module.
+
+if SDFS_UART_MODULE
+
+config SDFS_UART_MODULE_INIT_PRIORITY
+    int "SDFS UART Module Init Priority"
+    default 80
+    help
+      Set the initialization priority of the SDFS UART module. This priority must be higher than the peripheral power initialization priority to ensure proper operation.
+
+endif

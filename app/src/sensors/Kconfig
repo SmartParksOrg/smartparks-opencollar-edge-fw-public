@@ -1,0 +1,12 @@
+# COPYRIGHT NOTICE: (c) 2022 Irnas. All rights reserved.
+rsource "lis2dw12_sensor/Kconfig"
+rsource "air_quality/Kconfig"
+
+menuconfig SENSORS_MODULE
+    bool "Sensors config options"
+    default n
+    select GPIO
+    select I2C
+    select SENSOR
+    select NRFX_TEMP
+    select TEMP_NRF5

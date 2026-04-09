@@ -1,0 +1,102 @@
+/ {
+    zephyr,user {
+		io-channels = <&adc 1>;
+	};
+
+    vbatt {
+		compatible = "irnas,voltage-divider";
+		io-channels = <&adc 2>;
+		lower-resistor-ohms = <390>;
+		upper-resistor-ohms = <220>;
+		power-gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>;
+        power-startup-delay-ms=<200>;
+        status = "okay";
+	};
+
+    pins: pins {
+        compatible = "gpio-keys";
+        fence_port_gpio: fence_port_gpio {
+            gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+        };
+
+        fence_port_analog: fence_port_analog {
+            gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+        };
+
+        front_end_ctx: front_end_ctx {
+            gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+        };
+
+        front_end_csd: front_end_csd {
+            gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+        };
+
+        front_end_ant_sel: front_end_ant_sel {
+            gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+        };
+
+        front_end_cps: front_end_cps {
+            gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+        };
+    };
+
+    front_end_ctx_pwr  {
+        compatible = "irnas,peripheral-power";
+        power-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+        initial-state = <0>;
+        status = "okay";
+    };
+
+    front_end_csd_pwr  {
+        compatible = "irnas,peripheral-power";
+        power-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+        initial-state = <0>;
+        status = "okay";
+    };
+
+    front_end_ant_sel_pwr  {
+        compatible = "irnas,peripheral-power";
+        power-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+        initial-state = <0>;
+        status = "okay";
+    };
+
+    front_end_cps_pwr  {
+        compatible = "irnas,peripheral-power";
+        power-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+        initial-state = <0>;
+        status = "okay";
+    };
+};
+
+&adc {
+	status = "okay";
+
+    #address-cells = <1>;
+	#size-cells = <0>;
+
+    channel@1 {
+		reg = <1>;
+		zephyr,gain = "ADC_GAIN_1_6";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>; /* 10 us by defoult */
+		zephyr,input-positive = <NRF_SAADC_AIN1>; /* P0.03 */
+		zephyr,resolution = <12>;
+        zephyr,vref-mv = <2800>;
+	};
+};
+
+dmic_dev: &pdm0 {
+    status = "okay";
+    clock-source = "PCLK32M_HFXO";
+    #address-cells = <0x1>;
+    #size-cells = <0x0>;
+    t5838: t5838@53 {
+        status = "disabled"; /* Microphone disabled because it's not in use and to achieve low power */
+        compatible = "invensense,t5838-nrf-pdm";
+        thsel-gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+        wake-gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+        pdmclk-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+        reg = <0x53>;
+    };
+};

@@ -1,0 +1,18 @@
+menuconfig LORA_IRQ_HANDLER
+  bool "Enable IRQ thread"
+
+if LORA_IRQ_HANDLER
+
+config LORA_IRQ_HANDLER_STACK_SIZE
+  int "IRQ thread stack size"
+  default 1024
+  help
+	Stack size for the IRQ handling thread.
+
+config LORA_IRQ_HANDLER_PRIORITY
+  int "IRQ thread priority"
+  default 10
+  help
+	Priority for the IRQ handling thread.
+
+endif # LORA_IRQ_HANDLER

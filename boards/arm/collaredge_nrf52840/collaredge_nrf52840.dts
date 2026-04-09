@@ -1,0 +1,310 @@
+/*
+ * Copyright (c) 2017 Linaro Limited
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <nordic/nrf52840_qiaa.dtsi>
+#include "collaredge_nrf52840-pinctrl.dtsi"
+#include <lr11xx_bindings_def.h>
+
+/ {
+	model = "Irnas Collar NRF52840";
+	compatible = "nordic,collaredge-nrf52840";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,uart-mcumgr = &uart0;
+		zephyr,bt-mon-uart = &uart0;
+		zephyr,bt-c2h-uart = &uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+		nordic,pm-ext-flash = &en25qh32b;
+	};
+
+	vbatt {
+		compatible = "irnas,voltage-divider";
+		io-channels = <&adc 2>;
+		lower-resistor-ohms = <390>;
+		upper-resistor-ohms = <220>;
+		power-gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>;
+		power-startup-delay-ms = <200>;
+		status = "okay";
+	};
+
+
+	leds {
+		compatible = "gpio-leds";
+		led_r: led_r {
+			gpios = <&gpio0 24 GPIO_ACTIVE_LOW>;
+		};
+
+		led_g: led_g {
+			gpios = <&gpio0 25 GPIO_ACTIVE_LOW>;
+		};
+
+		led_b: led_b {
+			gpios = <&gpio0 27 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+
+	pins: pins {
+		compatible = "gpio-keys";
+		ext_out_sw_en: ext_out_sw_en {
+			gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+		};
+		front_end_ctx: front_end_ctx {
+			gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+		};
+		reed: reed {
+			gpios = <&gpio0 26 GPIO_ACTIVE_LOW>;
+		};
+		gps_pwr: gps_pwr {
+			gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+		};
+		front_end_csd: front_end_csd {
+			gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+		};
+		gps_vbck: gps_vbck {
+			gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+		};
+		front_end_ant_sel: front_end_ant_sel {
+			gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+		};
+		front_end_cps: front_end_cps {
+			gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	ext_out_sw_en_pwr  {
+		compatible = "irnas,peripheral-power";
+		power-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+		initial-state = <0>;
+		status = "okay";
+	};
+
+	front_end_ctx_pwr  {
+		compatible = "irnas,peripheral-power";
+		power-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+		initial-state = <0>;
+		status = "okay";
+	};
+
+	front_end_csd_pwr  {
+		compatible = "irnas,peripheral-power";
+		power-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+		initial-state = <0>;
+		status = "okay";
+	};
+
+	front_end_ant_sel_pwr  {
+		compatible = "irnas,peripheral-power";
+		power-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+		initial-state = <0>;
+		status = "okay";
+	};
+
+	front_end_cps_pwr  {
+		compatible = "irnas,peripheral-power";
+		power-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+		initial-state = <0>;
+		status = "okay";
+	};
+
+	gps_en_pwr  {
+		compatible = "irnas,peripheral-power";
+		power-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+		initial-state = <0>;
+		status = "okay";
+	};
+
+	aliases {
+		led-r = &led_r;
+		led-g = &led_g;
+		led-b = &led_b;
+		serial-uart = &uart0;
+		gps-i2c = &i2c1;
+		external-flash = &en25qh32b;
+	};
+};
+
+&adc {
+	status = "okay";
+};
+
+&gpiote {
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+	compatible = "nordic,nrf-uarte";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-1 = <&uart0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+arduino_i2c: &i2c0 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-1 = <&i2c0_sleep>;
+	pinctrl-names = "default", "sleep";
+	lis2dw12_accel: lis2dw12-accel@19 {
+        compatible = "irnas,lis2dw12";
+        reg = <0x19>;
+		irq-gpios = <&gpio1 3 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+        int-pin = <1>;
+        range = <2>;
+        power-mode = <1>;
+        wu-threshold = <0x6>;
+        wu-duration = <0x3>;
+        fifo-mode = <0>;
+        fifo-watermark = <24>;
+    };
+};
+
+&i2c1 {// GPS SDA/SCL
+	compatible = "nordic,nrf-twi";
+	/* Cannot be used together with spi1. */
+	status = "okay";
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-1 = <&i2c1_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_default>;
+	pinctrl-1 = <&pwm0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&spi0 {
+	/* Cannot be used together with i2c0. */
+	status = "disabled";
+};
+
+&spi1 {
+	status = "disabled";
+};
+
+&spi2 {
+	compatible = "nordic,nrf-spi";
+	status = "okay";
+	cs-gpios = <&gpio0 17 GPIO_ACTIVE_LOW>, <&gpio0 16 GPIO_ACTIVE_LOW>;
+
+	pinctrl-0 = <&spi2_default>;
+	pinctrl-1 = <&spi2_sleep>;
+	pinctrl-names = "default", "sleep";
+	en25qh32b: en25qh32b@0 {
+		compatible = "irnas,en25";
+		reg = <0>;
+		spi-max-frequency = <104000000>;
+		jedec-id = [ 1F 42 16  ];
+		size = <33554432>;
+		write-sector-size = <256>;
+		erase-full-block-size = <65536>;
+		erase-half-block-size = <32768>;
+		erase-sector-size = <4096>;
+
+		enter-dpd-delay = <30>;
+		exit-dpd-delay = <30>;
+
+		/* wp- and hold- gpios need to be set to active high due to a bug in the flash driver */
+		wp-gpios = <&gpio0 22 GPIO_ACTIVE_HIGH>;
+		hold-gpios = <&gpio0 23 GPIO_ACTIVE_HIGH>;
+	};
+
+	lr11xx: lr11xx@1 {
+		compatible = "irnas,lr11xx";
+		reg = <1>;
+		spi-max-frequency = <4000000>;
+
+		reset-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
+		busy-gpios = <&gpio1 12 GPIO_ACTIVE_HIGH>;
+		event-gpios = <&gpio0 28 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+
+		rf-sw-enable = <(LR11XX_DIO5 | LR11XX_DIO6 | LR11XX_DIO7 | LR11XX_DIO8)>;  // all DIOs used
+		rf-sw-rx-mode = <LR11XX_DIO6>;  // receive - LNA_LF0 path active
+		rf-sw-tx-mode = <LR11XX_DIO5>;  // send - PA_HP_LF active
+		rf-sw-tx-hp-mode = <LR11XX_DIO5>;  // same as tx cause only RFO_HP_LF is connected
+		rf-sw-tx-hf-mode = <LR11XX_DIO7>;  // same as tx cause only RFO_HP_LF is connected
+		rf-sw-wifi-mode = <LR11XX_DIO7>;  // WIFI_ANT path active
+		rf-sw-gnss-mode = <LR11XX_DIO8>;  // GPS_LNA enable
+
+		lf-tx-path = <LR11XX_TX_PATH_LF_HP>;
+
+		/* TCXO configuration */
+		tcxo-supply = <LR11XX_TCXO_SUPPLY_1_8V>;
+		tcxo-wakeup-time = <5>;
+
+		/* LF clock config */
+		lf-clk = <LR11XX_LFCLK_EXT>;
+		/* Regulator */
+		reg-mode = <LR11XX_REG_MODE_DCDC>;
+	};
+};
+&spi3 {
+	status = "disabled";
+};
+
+&flash0 {
+	/*
+	 * For more information, see:
+	 * http: //docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
+	 */
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			reg = <0x000000000 0x0000C000>;
+		};
+		slot0_partition: partition@c000 {
+			reg = <0x0000C000 0x00067000>;
+		};
+		slot1_partition: partition@73000 {
+			reg = <0x00073000 0x00067000>;
+		};
+		scratch_partition: partition@da000 {
+			reg = <0x000da000 0x0001e000>;
+		};
+
+		/*
+		 * The flash starting at 0x000f8000 and ending at
+		 * 0x000fffff is reserved for use by the application.
+		 */
+
+		/*
+		 * Storage partition will be used by FCB/LittleFS/NVS
+		 * if enabled.
+		 */
+		storage_partition: partition@f8000 {
+			reg = <0x000f8000 0x00008000>;
+		};
+	};
+};
+
+&usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
+};

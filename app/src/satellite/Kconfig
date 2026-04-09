@@ -1,0 +1,6 @@
+# COPYRIGHT NOTICE: (c) 2022 Irnas. All rights reserved.
+
+menuconfig SATELLITE
+    bool "Satellite communication module"
+    default n
+    depends on BOARD_RANGEREDGE_NRF52840 || BOARD_RANGEREDGE_AIRQ_NRF52840 || BOARD_FREEEDGE_NRF52840

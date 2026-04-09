@@ -1,0 +1,5 @@
+menuconfig OUTDOOR_DETECTION
+    bool "Outdoor detection module"
+    default y
+    help
+        Enable the outdoor detection module for detecting if the device is outdoors or indoors.

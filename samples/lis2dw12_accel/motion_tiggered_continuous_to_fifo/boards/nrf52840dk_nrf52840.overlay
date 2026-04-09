@@ -1,0 +1,24 @@
+/*
+ * Copyright (c) 2019, Linaro Ltd.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* This is an example of an overlay implementation, check the driver's
+ * `irnas-lis2dw12-driver/dts/bindings/irnas,lis2dw12-common.yaml`
+ * file for detailed explanations of all possible settings.
+ */
+&i2c0 {
+	lis2dw12_accel: lis2dw12-accel@19 {
+        compatible = "irnas,lis2dw12";
+        label = "LIS2DW12-ACCEL";
+        reg = <0x19>;
+        irq-gpios=<&gpio1 3 GPIO_ACTIVE_LOW>;
+        int-pin = <1>;
+        range = <2>;
+        power-mode = <0>;
+        wu-threshold = <0x9>;
+        fifo-mode = <4>; /* Not needed for this specific sample because we set the FIFO mode again at runtime */
+        fifo-threshold = <0x24>; /* Watermark threshold - used for watermark triggers */
+    };
+};

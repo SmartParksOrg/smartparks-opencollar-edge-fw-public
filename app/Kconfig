@@ -1,0 +1,130 @@
+#
+# Copyright (c) 2018 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
+#
+
+rsource "src/flash/Kconfig"
+rsource "src/sensors/Kconfig"
+rsource "src/lorawan/Kconfig"
+rsource "src/bt_module/Kconfig"
+rsource "src/outdoor_detection/Kconfig"
+rsource "src/lp0/Kconfig"
+
+menu "Zephyr Kernel"
+source "$ZEPHYR_BASE/Kconfig.zephyr"
+endmenu
+
+menu "Size configs"
+config BT_NUS_BUFFER_SIZE
+	int "UART payload buffer element size"
+	default 250
+	help
+	  Size of the payload buffer in each RX and TX FIFO element
+
+config THREAD_MAIN_STACKSIZE
+    int "Stacksize of the main thread"
+    default 4096
+
+config THREAD_SENSORS_STACKSIZE
+    int "Stacksize of the sensor thread"
+    default 4096
+
+config THREAD_LORA_STACKSIZE
+    int "Stacksize of the lora thread"
+    default 4096
+
+config THREAD_BLE_READ_STACKSIZE
+    int "Stacksize of the ble receive message thread"
+    default 1024
+
+config THREAD_BLE_WRITE_STACKSIZE
+    int "Stacksize of the ble send message thread"
+    default 1024
+
+config THREAD_FLASH_STACKSIZE
+    int "Stacksize of the flash thread"
+    default 2048
+
+config THREAD_SATELLITE_STACKSIZE
+    int "Stacksize of the satellite thread"
+    default 4096
+
+config THREAD_PRIORITY
+    int "Thread priority"
+    default 7
+
+endmenu
+
+menu "Low power configs"
+
+config LOW_POWER
+    bool "Enable low power mode"
+    default y
+    select PM
+    # select SYS_PM_STATE_LOCK
+    select DEVICE_POWER_MANAGEMENT
+    select PM_DEVICE
+    select PM_DEVICE_RUNTIME
+    select PM_DEBUG
+
+config DEBUG_MODE
+    bool "Enable debug mode"
+    default n
+    select PRINTK
+    select LOG
+    select LOG_MODE_OVERFLOW
+    select LOG_PRINTK
+    select CONSOLE
+
+choice
+    prompt "Operation debug mode"
+    optional
+    help
+      Specify debug mode: serial/RTT
+
+config DEBUG_MODE_RTT
+    bool "Debug mode using RTT backend"
+    select DEBUG_MODE
+    select RTT_CONSOLE
+    select USE_SEGGER_RTT
+
+config DEBUG_MODE_SERIAL
+    bool "Debug mode using serial backend"
+    select DEBUG_MODE
+    select UART_CONSOLE
+    select LOG_BACKEND_UART
+endchoice
+
+config PROVISIONING_MODE
+    bool "Enable provisioning mode"
+    default n
+
+choice
+    prompt "Operation test mode"
+    optional
+    help
+       Specify operation test mode: serial/RTT.
+
+config OPERATION_TEST_RTT
+    bool "Operation test on RTT"
+    select PRINTK
+    select CONSOLE
+    select RTT_CONSOLE
+    select USE_SEGGER_RTT
+    select SHELL
+    select SHELL_BACKEND_RTT
+    select PROVISIONING_MODE
+
+config OPERATION_TEST_SERIAL
+    bool "Operation test on serial"
+    select PRINTK
+    select CONSOLE
+    select UART_CONSOLE
+    select SHELL
+    select SHELL_BACKEND_SERIAL
+    select PROVISIONING_MODE
+
+endchoice
+
+endmenu

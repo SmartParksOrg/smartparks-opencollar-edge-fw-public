@@ -1,0 +1,6 @@
+zephyr_include_directories(.)
+target_sources(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sensors.c)
+add_subdirectory_ifdef(CONFIG_LIS2DW12_SENSOR lis2dw12_sensor)
+add_subdirectory(temperature_sensor)
+add_subdirectory_ifdef(CONFIG_FENCE_PORT fence_port)
+add_subdirectory_ifdef(CONFIG_AIR_QUALITY air_quality)

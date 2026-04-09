@@ -1,0 +1,103 @@
+diff --git a/drivers/flash/spi_nor.c b/drivers/flash/spi_nor.c
+index fd2701d23a5..29274e826a9 100644
+--- a/drivers/flash/spi_nor.c
++++ b/drivers/flash/spi_nor.c
+@@ -10,11 +10,14 @@
+ #define DT_DRV_COMPAT jedec_spi_nor
+ 
+ #include <errno.h>
++#include <string.h>
++
+ #include <zephyr/drivers/flash.h>
+ #include <zephyr/drivers/spi.h>
+ #include <zephyr/init.h>
+-#include <string.h>
++#include <zephyr/kernel.h>
+ #include <zephyr/logging/log.h>
++#include <zephyr/pm/device.h>
+ #include <zephyr/sys_clock.h>
+ 
+ #include "spi_nor.h"
+@@ -162,6 +165,72 @@ static const struct jesd216_erase_type minimal_erase_types[JESD216_NUM_ERASE_TYP
+ };
+ #endif /* CONFIG_SPI_NOR_SFDP_MINIMAL */
+ 
++#ifdef CONFIG_PM_DEVICE
++static int spi_nor_enter_power_down(const struct device *dev)
++{
++	const struct spi_nor_config *cfg = dev->config;
++	uint8_t cmd = 0xB9; /* JEDEC Deep Power Down command */
++	struct spi_buf tx_buf = {
++		.buf = &cmd,
++		.len = 1,
++	};
++	struct spi_buf_set tx = {
++		.buffers = &tx_buf,
++		.count = 1,
++	};
++
++	return spi_write_dt(&cfg->spi, &tx);
++}
++
++static int spi_nor_release_power_down(const struct device *dev)
++{
++	const struct spi_nor_config *cfg = dev->config;
++	uint8_t cmd = 0xAB; /* JEDEC Release from Deep Power Down */
++	struct spi_buf tx_buf = {
++		.buf = &cmd,
++		.len = 1,
++	};
++	struct spi_buf_set tx = {
++		.buffers = &tx_buf,
++		.count = 1,
++	};
++
++	int ret = spi_write_dt(&cfg->spi, &tx);
++
++	if (ret == 0) {
++		/* Wait tRES1 (max ~30us) */
++		k_sleep(K_USEC(40));
++	}
++
++	return ret;
++}
++
++static int spi_nor_pm_control(const struct device *dev,
++	enum pm_device_action action)
++{
++	int ret = 0;
++
++	switch (action) {
++	case PM_DEVICE_ACTION_RESUME:
++	case PM_DEVICE_ACTION_TURN_ON:
++		ret = spi_nor_release_power_down(dev);
++		break;
++
++	case PM_DEVICE_ACTION_SUSPEND:
++	case PM_DEVICE_ACTION_TURN_OFF:
++		ret = spi_nor_enter_power_down(dev);
++		break;
++
++	default:
++	ret = -ENOTSUP;
++	}
++
++	return ret;
++}
++
++PM_DEVICE_DT_DEFINE(DT_DRV_INST(0), spi_nor_pm_control);
++#endif /* CONFIG_PM_DEVICE */
++
+ static int spi_nor_write_protection_set(const struct device *dev,
+ 					bool write_protect);
+ 
+@@ -1381,7 +1450,5 @@ static const struct spi_nor_config spi_nor_config_0 = {
+ 
+ static struct spi_nor_data spi_nor_data_0;
+ 
+-DEVICE_DT_INST_DEFINE(0, &spi_nor_init, NULL,
+-		 &spi_nor_data_0, &spi_nor_config_0,
+-		 POST_KERNEL, CONFIG_SPI_NOR_INIT_PRIORITY,
+-		 &spi_nor_api);
++DEVICE_DT_INST_DEFINE(0, &spi_nor_init, PM_DEVICE_DT_GET(DT_DRV_INST(0)), &spi_nor_data_0,
++		      &spi_nor_config_0, POST_KERNEL, CONFIG_SPI_NOR_INIT_PRIORITY, &spi_nor_api);
