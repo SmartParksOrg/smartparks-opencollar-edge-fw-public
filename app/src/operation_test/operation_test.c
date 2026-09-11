@@ -831,7 +831,7 @@ static int cmd_test_lora_rx(const struct shell *shell, size_t argc, char **argv)
 		return -EIO;
 	}
 
-	k_sleep(K_SECONDS(1)); /* Wait for RX to settle */
+	k_sleep(K_MSEC(500)); /* Wait for RX to settle */
 
 	int low_rssi_limit = -130;
 
@@ -851,9 +851,6 @@ static int cmd_test_lora_rx(const struct shell *shell, size_t argc, char **argv)
 	uart_pm_enable(serial_uart_dev->name);
 #endif /* DT_NODE_HAS_STATUS(DT_ALIAS(serial_uart), okay) */
 #endif /* CONFIG_RF_FRONT_END_MODULE */
-
-	/* Deinitialize LR11xx system */
-	prv_lr11xx_system_deinit(context);
 
 	/* End test */
 	cmd_shell_print_output(shell, XSTR(OPERATION_TEST_LORA_RX), true, 0, buf);
@@ -951,14 +948,12 @@ static int cmd_test_lora_tx(const struct shell *shell, size_t argc, char **argv)
 
 	int err = prv_lr11xx_system_init(context);
 	if (err) {
-		prv_lr11xx_system_deinit(context);
 		cmd_shell_print_output(shell, XSTR(OPERATION_TEST_LORA_TX), false, NULL, NULL);
 		return err;
 	}
 
 	err = prv_radio_lora_init_tx(context, frequency_hz);
 	if (err) {
-		prv_lr11xx_system_deinit(context);
 		cmd_shell_print_output(shell, XSTR(OPERATION_TEST_LORA_TX), false, NULL, NULL);
 		return err;
 	}
@@ -987,9 +982,6 @@ static int cmd_test_lora_tx(const struct shell *shell, size_t argc, char **argv)
 		rf_front_end_module_set_mode(RF_FRONT_END_MODE_SLEEP);
 	}
 #endif /* CONFIG_RF_FRONT_END_MODULE */
-
-	/* Deinitialize LR11xx system */
-	prv_lr11xx_system_deinit(context);
 
 	/* End test */
 	cmd_shell_print_output(shell, XSTR(OPERATION_TEST_LORA_TX), true, 0, buf);
@@ -1634,6 +1626,12 @@ static int cmd_test_low_power(const struct shell *shell, size_t argc, char **arg
 /**
  * @brief Store new settings in NVS. Tracker needs to be rebooted for them to take place.
  *
+ * This test presumes the setting request comes in the form of an array of hex values in the
+ * following order:
+ *
+ * [family (2 hex chars)][id (2 hex chars)][len (2 hex chars)][value (len*2 hex chars)]
+ *
+ * Example: SETTING 05030101
  */
 static int cmd_test_change_setting(const struct shell *shell, size_t argc, char **argv)
 {
@@ -1650,15 +1648,24 @@ static int cmd_test_change_setting(const struct shell *shell, size_t argc, char 
 		return 0;
 	}
 
+	shell_print(shell, "ACK %s %s", XSTR(OPERATION_TEST_SETTING), argv[1]);
+
 	char tmp[2];
 	uint8_t i = 0;
+	// Family
+	tmp[0] = argv[1][i];
+	tmp[1] = argv[1][i + 1];
+	uint8_t family = (uint8_t)strtol(tmp, NULL, 16);
+	i += 2;
+
 	// ID
 	tmp[0] = argv[1][i];
 	tmp[1] = argv[1][i + 1];
-	i += 2;
 	uint8_t setting_id = (uint8_t)strtol(tmp, NULL, 16);
+	i += 2;
 
-	if (!check_setting_id(setting_id)) {
+	shell_print(shell, "FAM %02X ID %02X", family, setting_id);
+	if (!check_setting_id(family, setting_id)) {
 		sprintf(buf, "INVALID_ID");
 		cmd_shell_print_output(shell, XSTR(OPERATION_TEST_SETTING), false, buf, NULL);
 		return 0;
@@ -1667,13 +1674,15 @@ static int cmd_test_change_setting(const struct shell *shell, size_t argc, char 
 	// LEN
 	tmp[0] = argv[1][i];
 	tmp[1] = argv[1][i + 1];
-	i += 2;
 	uint8_t setting_len = (uint8_t)strtol(tmp, NULL, 16);
-	if (setting_len != get_setting_len(setting_id)) {
+	if (setting_len != get_setting_len(family, setting_id)) {
 		sprintf(buf, "INVALID_LEN");
 		cmd_shell_print_output(shell, XSTR(OPERATION_TEST_SETTING), false, buf, NULL);
 		return 0;
 	}
+	i += 2;
+
+	shell_print(shell, "FAM %02X ID %02X LEN %02X", family, setting_id, setting_len);
 
 	// Store setting
 	uint8_t new_data[setting_len];
@@ -1684,14 +1693,25 @@ static int cmd_test_change_setting(const struct shell *shell, size_t argc, char 
 		new_data[j] = (uint8_t)strtol(tmp, NULL, 16);
 	}
 
+	shell_hexdump(shell, new_data, setting_len);
+
 	// Setting update
-	set_setting_value_by_id(setting_id, new_data, setting_len);
+	set_setting_value_by_id(family, setting_id, new_data, setting_len);
+	if ((setting_id == Main_settings.lr_region->id &&
+	     family == Main_settings.lr_region->family) ||
+	    (setting_id == Main_settings.app_key->id && family == Main_settings.app_key->family) ||
+	    (setting_id == Main_settings.app_eui->id && family == Main_settings.app_eui->family)) {
+		lorawan_set_configuration(
+			Main_settings.app_eui->def_val, Main_settings.app_key->def_val,
+			Main_settings.lr_region->def_val, Main_settings.lr_adr->def_val,
+			Main_settings.lr_adr_profile->def_val);
+	}
 	// NVS update
-	nvs_storage_write((uint16_t)setting_id, new_data, setting_len);
+	nvs_storage_write(MAKE_SETTING_KEY(family, setting_id), new_data, setting_len);
 
 	// Read back
 	uint8_t read_data[setting_len];
-	nvs_storage_read((uint16_t)setting_id, read_data, setting_len);
+	nvs_storage_read(MAKE_SETTING_KEY(family, setting_id), read_data, setting_len);
 
 	int offset = 0;
 	offset += sprintf(buf + offset, "ID:%02X|VAL:", setting_id);
@@ -1720,30 +1740,35 @@ static int cmd_test_get_setting(const struct shell *shell, size_t argc, char **a
 	}
 	// Read new setting
 	// Parse
-	if (argv[1] == NULL) {
+	if (argv[1] == NULL || argv[2] == NULL) {
 		cmd_shell_print_output(shell, XSTR(OPERATION_TEST_GET_SETTING), false, NULL, NULL);
 		return 0;
 	}
 
 	char tmp[2];
 	uint8_t i = 0;
-	// ID
+	// Family
 	tmp[0] = argv[1][i];
 	tmp[1] = argv[1][i + 1];
-	i += 2;
+	uint8_t family = (uint8_t)strtol(tmp, NULL, 16);
+
+	// ID
+	tmp[0] = argv[2][i];
+	tmp[1] = argv[2][i + 1];
 	uint8_t setting_id = (uint8_t)strtol(tmp, NULL, 16);
-	if (!check_setting_id(setting_id)) {
+
+	if (!check_setting_id(family, setting_id)) {
 		sprintf(buf, "INVALID_ID");
 		cmd_shell_print_output(shell, XSTR(OPERATION_TEST_GET_SETTING), false, buf, NULL);
 		return 0;
 	}
 
 	// Get predicted length
-	int len_p = get_setting_len(setting_id);
+	int len_p = get_setting_len(family, setting_id);
 	uint8_t setting_buf[len_p];
 
 	// Setting get
-	int len = get_setting_by_id(setting_id, setting_buf);
+	int len = get_setting_by_id(family, setting_id, setting_buf);
 	if (len != len_p) {
 		sprintf(buf, "INVALID_LEN");
 		cmd_shell_print_output(shell, XSTR(OPERATION_TEST_GET_SETTING), false, buf, NULL);
@@ -1753,6 +1778,7 @@ static int cmd_test_get_setting(const struct shell *shell, size_t argc, char **a
 	int offset = 0;
 	offset += sprintf(buf + offset, "ID:%02X|VAL:", setting_id);
 	offset += sprintf(buf + offset, "%02X ", PORT_SETTINGS);
+	offset += sprintf(buf + offset, "%02X ", family);
 	offset += sprintf(buf + offset, "%02X ", setting_id);
 	offset += sprintf(buf + offset, "%02X ", len);
 	for (uint8_t j = 0; j < len; j++) {

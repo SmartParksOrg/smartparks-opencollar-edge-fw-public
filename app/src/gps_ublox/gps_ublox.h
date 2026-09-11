@@ -611,7 +611,7 @@ class SFE_UBLOX_GPS
 
 	void factoryReset(); // Send factory reset sequence (i.e. load "default" configuration and
 			     // perform hardReset)
-	void hardReset();    // Perform a reset leading to a cold start (zero info start-up)
+	bool hardReset();    // Perform a reset leading to a cold start (zero info start-up)
 
 	int
 	transferWriteI2C(uint8_t *buf, uint32_t num_bytes,

@@ -48,13 +48,13 @@ User can enable or disable satellite functionality by setting value of setting:
 
 ```json
 "satellite_enabled": {
-    "id": "0x3A",
-    "enabled": true,
-    "default": true,
+    "id": "0x01",
+    "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x07"
 }
 ```
 
@@ -77,14 +77,14 @@ Sending messages via satellite module is governed similar to LoRaWAN send. Setti
 
 ```json
 "sat_send_flag": {
-    "id": "0x39",
-    "enabled": true,
-    "default": 138,
+    "id": "0x02",
+    "default": 16522,
     "min": 0,
     "max": 4294967295,
     "length": 4,
-    "conversion": "uint32"
-},
+    "conversion": "uint32",
+    "family": "0x03"
+}
 ```
 
 determines if message on port 1 - 32 will be send via satellite or not. If for specific port bit is
@@ -106,14 +106,14 @@ Send period is determined by setting:
 
 ```json
 "satellite_send_interval": {
-    "id": "0x04",
-    "enabled": true,
-    "default": 3600,
+    "id": "0x00",
+    "default": 86400,
     "min": 0,
     "max": 86400,
     "length": 4,
-    "conversion": "uint32"
-},
+    "conversion": "uint32",
+    "family": "0x07"
+}
 ```
 
 If satellite module is enabled and period is reached, communication thread will send
@@ -127,13 +127,13 @@ is defined by user setting:
 
 ```json
 "satellite_retry": {
-    "id": "0x3B",
-    "enabled": true,
+    "id": "0x02",
     "default": 10,
     "min": 1,
     "max": 15,
     "length": 1,
-    "conversion": "uint8"
+    "conversion": "uint8",
+    "family": "0x07"
 }
 ```
 

@@ -183,18 +183,19 @@ void SFE_UBLOX_GPS::factoryReset()
 	hardReset(); // cause factory default config to actually be loaded and used cleanly
 }
 
-void SFE_UBLOX_GPS::hardReset()
+bool SFE_UBLOX_GPS::hardReset()
 {
 	// Issue hard reset
 	packetCfg.cls = UBX_CLASS_CFG;
 	packetCfg.id = UBX_CFG_RST;
 	packetCfg.len = 4;
 	packetCfg.startingSpot = 0;
-	payloadCfg[0] = 0xff;       // cold start
-	payloadCfg[1] = 0xff;       // cold start
-	payloadCfg[2] = 0;          // 0=HW reset
-	payloadCfg[3] = 0;          // reserved
-	sendCommand(&packetCfg, 0); // don't expect ACK
+	payloadCfg[0] = 0xff; // cold start
+	payloadCfg[1] = 0xff; // cold start
+	payloadCfg[2] = 0;    // 0=HW reset
+	payloadCfg[3] = 0;    // reserved
+	/* The reset command does not return an ACK, but I2C write failures are still reported. */
+	return sendCommand(&packetCfg, 0) == SFE_UBLOX_STATUS_SUCCESS;
 }
 
 // Write data to I2C, Arguments: buffer - data to write, num_bytes - buffer length,

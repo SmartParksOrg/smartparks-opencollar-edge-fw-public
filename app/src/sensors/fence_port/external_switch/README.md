@@ -129,12 +129,13 @@ Turns on external switch detection.
 
 ```json
 "external_switch_detection_enabled": {
-    "id": "0x7E",
+    "id": "0x0E",
     "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x08"
 }
 ```
 
@@ -152,12 +153,13 @@ Available settings:
 
 ```json
 "external_switch_detection_trigger_type": {
-    "id": "0x7F",
-    "default": 1,
+    "id": "0x0F",
+    "default": 0,
     "min": 0,
     "max": 1,
     "length": 1,
-    "conversion": "uint8"
+    "conversion": "uint8",
+    "family": "0x08"
 }
 ```
 
@@ -178,12 +180,13 @@ the device ignores additional input state changes.
 
 ```json
 "external_switch_detection_trigger_debounce_ms": {
-    "id": "0x80",
+    "id": "0x10",
     "default": 50,
     "min": 0,
     "max": 2000,
     "length": 2,
-    "conversion": "uint16"
+    "conversion": "uint16",
+    "family": "0x08"
 }
 ```
 
@@ -199,12 +202,13 @@ Reporting interval at which a report is sent over LoRa. Setting the interval to 
 
 ```json
 "external_switch_detection_reporting_interval": {
-    "id": "0x81",
-    "default": 0,
+    "id": "0x11",
+    "default": 3600,
     "min": 0,
     "max": 86400,
     "length": 4,
-    "conversion": "uint32"
+    "conversion": "uint32",
+    "family": "0x08"
 }
 ```
 
@@ -215,12 +219,13 @@ Enabling this setting will allow the device to send report of inactivity when
 
 ```json
 "external_switch_send_inactivity_report": {
-    "id": "0x82",
+    "id": "0x12",
     "default": true,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x08"
 }
 ```
 
@@ -232,12 +237,13 @@ before sending a report over LoRa.
 
 ```json
 "external_switch_minimal_report_duration_ms": {
-    "id": "0x83",
+    "id": "0x13",
     "default": 250,
     "min": 0,
     "max": 65000,
     "length": 2,
-    "conversion": "uint16"
+    "conversion": "uint16",
+    "family": "0x08"
 }
 ```
 
@@ -256,12 +262,13 @@ Set this pull of the `AN` (GPIO input) line for more accurate activity and count
 
 ```json
 "external_switch_input_pull": {
-    "id": "0x84",
-    "default": 0,
+    "id": "0x14",
+    "default": 1,
     "min": 0,
     "max": 2,
     "length": 1,
-    "conversion": "uint8"
+    "conversion": "uint8",
+    "family": "0x08"
 }
 ```
 
@@ -277,11 +284,12 @@ inside of the reporting interval `external_switch_detection_reporting_interval`.
 
 ```json
 "external_switch_counter_enabled": {
-    "id": "0x85",
+    "id": "0x15",
     "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x08"
 }
 ```

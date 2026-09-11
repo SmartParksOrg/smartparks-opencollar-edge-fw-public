@@ -6,7 +6,7 @@ c_int32_limits = [-2147483648, 2147483647]
 c_uint32_limits = [0, 4294967295]
 c_float_limits = [-3.402823466e38, 3.402823466e38]
 
-json_settings_fields = {"id", "default", "min", "max", "length", "conversion"}
+json_settings_fields = {"id", "default", "min", "max", "length", "conversion", "family"}
 json_command_fields = {"id", "length", "conversion", "value"}
 json_message_fields = {"port", "id", "length", "conversion"}
 
@@ -113,6 +113,12 @@ def check_values(var, val_type, limits=None):
         return False
     if not var["id"].startswith("0x"):
         print("ID value error")
+        return False
+    if type(var["family"]) is not str:
+        print("Family type error")
+        return False
+    if not var["family"].startswith("0x"):
+        print("Family value error")
         return False
     # check range of values
     if limits is not None:
@@ -244,6 +250,10 @@ def construct_dict_setting(setting):
     setting_dict["id"] = setting["id"]
     setting_dict["length"] = str(setting["length"])
 
+    # Add family to dict if it exists, otherwise don't include it
+    if "family" in setting:
+        setting_dict["family"] = setting["family"]
+
     return setting_dict
 
 
@@ -332,7 +342,7 @@ def construct_dict_message(message):
     return message_dict
 
 
-# Validate setting json entry and return dict structure
+# Validate setting json entry and return dict structure (used by settings and values)
 def setting_validate(json_data):
     """Validate and normalize a settings JSON entry."""
     # Check if all fields are present

@@ -46,17 +46,32 @@ typedef void (*lorawan_recv_handler_t)(const uint8_t *payload, uint8_t size, uin
  */
 void lorawan_recv_handler_register(lorawan_recv_handler_t);
 
+/**
+ * @brief Update the LoRaWAN configuration.
+ *
+ * After the initial configuration, changing the region, JoinEUI, or AppKey latches a pending
+ * activation change. The next uplink starts a new join even if the setting is changed back before
+ * that uplink.
+ *
+ * @param[in] join_eui JoinEUI used for OTAA activation.
+ * @param[in] app_key AppKey used for OTAA activation.
+ * @param[in] region LoRaWAN region.
+ * @param[in] adr Custom ADR data-rate setting.
+ * @param[in] adr_profile ADR profile selection.
+ */
 void lorawan_set_configuration(uint8_t join_eui[8], uint8_t app_key[16], uint8_t region,
 			       uint8_t adr, enum lorawan_adr_profile adr_profile);
 
 /**
- * @brief Start Semtech engine. Call this function to initiate reset and lora join.
+ * @brief Start the Semtech engine.
  *
+ * A valid persisted session is resumed. A join is started only when no usable session can be
+ * restored.
  */
 void lorawan_start(void);
 
 /**
- * @brief Reset lorawan module.
+ * @brief Reset the LoRaWAN module without unconditionally abandoning its persisted session.
  *
  */
 void lorawan_reset(void);

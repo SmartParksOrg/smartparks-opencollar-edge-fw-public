@@ -13,17 +13,20 @@
 /*!
  * @brief Check if setting ID is in the Main_settings structure.
  *
+ * @param[in] uint8_t family                 	Setting family.
  * @param[in] uint8_t id    Setting id.
  *
  * @retval  Return 1 if setting exist, 0 if not.
  */
-uint8_t check_setting_id(uint8_t id)
+uint8_t check_setting_id(uint8_t family, uint8_t id)
 {
-	for (uint8_t i = 0; i < Main_settings.n_settings; i++) {
-		if (id == Main_settings.settings_id[i]) {
+	for (uint16_t i = 0; i < Main_settings.n_settings; i++) {
+		if (id == Main_settings.settings_id[i] &&
+		    Main_settings.settings_family[i] == family) {
 			return 1;
 		}
 	}
+
 	return 0;
 }
 
@@ -35,10 +38,10 @@ uint8_t check_setting_id(uint8_t id)
  *
  * @retval  Return 1 if value exist, 0 if not.
  */
-uint8_t check_value_id(uint8_t id)
+uint8_t check_value_id(uint8_t family, uint8_t id)
 {
 	for (uint8_t i = 0; i < Main_values.n_values; i++) {
-		if (id == Main_values.values_id[i]) {
+		if (id == Main_values.values_id[i] && Main_values.values_family[i] == family) {
 			return 1;
 		}
 	}
@@ -52,10 +55,11 @@ uint8_t check_value_id(uint8_t id)
  *
  * @retval  Return length if value exist, 0 if not.
  */
-uint8_t get_setting_len(uint8_t id)
+uint8_t get_setting_len(uint8_t family, uint8_t id)
 {
-	for (uint8_t i = 0; i < Main_settings.n_settings; i++) {
-		if (id == Main_settings.settings_id[i]) {
+	for (uint16_t i = 0; i < Main_settings.n_settings; i++) {
+		if (id == Main_settings.settings_id[i] &&
+		    Main_settings.settings_family[i] == family) {
 			return Main_settings.settings_length[i];
 		}
 	}
@@ -65,14 +69,15 @@ uint8_t get_setting_len(uint8_t id)
 /*!
  * @brief Check if setting with this ID needs to be validated, if so check values
  *
+ * @param[in] uint8_t family                 	Setting family.
  * @param[in] uint8_t id    Value id.
  * @param[in] data          New data.
  *
  * @retval  True if valid otherwise false.
  */
-bool validate_setting(uint8_t id, uint8_t *data)
+bool validate_setting(uint8_t family, uint8_t id, uint8_t *data)
 {
-	if (id == Main_settings.tracker_type->id) {
+	if (id == Main_settings.tracker_type->id && family == Main_settings.tracker_type->family) {
 		uint8_t set_type = data[0];
 		// For all HW types default tracker type is valid
 		if (set_type == default_tracker) {
@@ -133,7 +138,7 @@ bool validate_setting(uint8_t id, uint8_t *data)
 #endif
 		return false;
 	}
-	if (id == Main_settings.device_pin->id) {
+	if (id == Main_settings.device_pin->id && family == Main_settings.device_pin->family) {
 		for (uint8_t i = 0; i < Main_settings.device_pin->len; i++) {
 			if (data[i] > 9) {
 				return false;
@@ -147,14 +152,15 @@ bool validate_setting(uint8_t id, uint8_t *data)
 /*!
  * @brief Check if ID is in the Main_values structure and return its value length
  *
- * @param[in] uint8_t id    Value id.
+ * @param[in] uint8_t family  Value family.
+ * @param[in] uint8_t id      Value id.
  *
  * @retval  Return length if value exist, 0 if not.
  */
-uint8_t get_value_len(uint8_t id)
+uint8_t get_value_len(uint8_t family, uint8_t id)
 {
 	for (uint8_t i = 0; i < Main_values.n_values; i++) {
-		if (id == Main_values.values_id[i]) {
+		if (id == Main_values.values_id[i] && family == Main_values.values_family[i]) {
 			return Main_values.values_length[i];
 		}
 	}

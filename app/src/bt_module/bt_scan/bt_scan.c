@@ -46,9 +46,15 @@ struct bt_scan_result {
 
 enum filter_type {
 	BT_SCAN_FILTER_NONE = 0,
-	BT_SCAN_FILTER_SP = 1,
+	BT_SCAN_FILTER_ONLY_MANUFACTURER_ID = 1,
 	BT_SCAN_FILTER_MAC = 2,
 	BT_SCAN_FILTER_PHONE = 3,
+	BT_SCAN_FILTER_ALL_EXCEPT_MANUFACTURER_ID = 4,
+};
+
+struct manufacturer_id_filter_context {
+	uint16_t manufacturer_id;
+	bool found;
 };
 
 enum bt_result_sort {
@@ -87,6 +93,8 @@ static void add_new_bt_scan_entry(struct bt_scan_result *buf, uint8_t *buf_len,
 static void sort_bt_scan_results_by_count(void);
 static void sort_bt_scan_results_by_rssi(void);
 static void sort_bt_scan_results_by_best_rssi(void);
+static bool manufacturer_id_data_cb(struct bt_data *data, void *user_data);
+static bool advertisement_has_manufacturer_id(struct net_buf_simple *buf, uint16_t manufacturer_id);
 static bool filter_scan_data(const bt_addr_le_t *addr, struct net_buf_simple *buf,
 			     enum filter_type filter, uint16_t man_data);
 
@@ -355,14 +363,59 @@ static void sort_bt_scan_results_by_count(void)
 }
 
 /**
- * @brief Add single entry at the end of the buffer.
+ * @brief Check an advertisement data element for a manufacturer ID.
  *
- * @param[in] addr
- * @param[in] buf
- * @param[in] filter
- * @param[in] man_data
+ * @param[in] data Advertisement data element.
+ * @param[in,out] user_data Manufacturer ID filter context.
  *
- * @return true if filter pass, false if not
+ * @return false when the configured manufacturer ID is found, otherwise true to continue parsing.
+ */
+static bool manufacturer_id_data_cb(struct bt_data *data, void *user_data)
+{
+	struct manufacturer_id_filter_context *context = user_data;
+
+	if (data->type != BT_DATA_MANUFACTURER_DATA || data->data_len < sizeof(uint16_t)) {
+		return true;
+	}
+
+	uint16_t manufacturer_id = ((uint16_t)data->data[1] << 8) | data->data[0];
+	if (manufacturer_id == context->manufacturer_id) {
+		context->found = true;
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * @brief Check whether an advertisement contains the configured manufacturer ID.
+ *
+ * @param[in] buf Advertisement data buffer.
+ * @param[in] manufacturer_id Manufacturer ID to find.
+ *
+ * @return true if the manufacturer ID is present, otherwise false.
+ */
+static bool advertisement_has_manufacturer_id(struct net_buf_simple *buf, uint16_t manufacturer_id)
+{
+	struct manufacturer_id_filter_context context = {
+		.manufacturer_id = manufacturer_id,
+		.found = false,
+	};
+
+	bt_data_parse(buf, manufacturer_id_data_cb, &context);
+
+	return context.found;
+}
+
+/**
+ * @brief Check whether advertisement data passes the configured scan filter.
+ *
+ * @param[in] addr Bluetooth address.
+ * @param[in] buf Advertisement data buffer.
+ * @param[in] filter Filter to apply.
+ * @param[in] man_data Manufacturer ID used by manufacturer filters.
+ *
+ * @return true if the advertisement passes the filter, otherwise false.
  */
 static bool filter_scan_data(const bt_addr_le_t *addr, struct net_buf_simple *buf,
 			     enum filter_type filter, uint16_t man_data)
@@ -372,20 +425,11 @@ static bool filter_scan_data(const bt_addr_le_t *addr, struct net_buf_simple *bu
 		// No filter, use all data
 		return true;
 	}
-	case BT_SCAN_FILTER_SP: {
-		// Filter SmartParks devices
-		// Read length and message type
-		// uint8_t len = buf->data[0];
-		uint8_t type = buf->data[1];
-		if (type == BT_DATA_MANUFACTURER_DATA) {
-			uint16_t new_man_data = buf->data[3] << 8 | buf->data[2];
-			if (man_data == new_man_data) {
-				LOG_INF("Correct manufacturer data detected!");
-
-				return true;
-			}
-		}
-		return false;
+	case BT_SCAN_FILTER_ONLY_MANUFACTURER_ID: {
+		return advertisement_has_manufacturer_id(buf, man_data);
+	}
+	case BT_SCAN_FILTER_ALL_EXCEPT_MANUFACTURER_ID: {
+		return !advertisement_has_manufacturer_id(buf, man_data);
 	}
 	case BT_SCAN_FILTER_PHONE: {
 		if ((addr->a.val[0] & 0b10) == 0) {

@@ -14,51 +14,54 @@ Several user settings are required for VHF beacon operation.
 
 ### General operational settings
 
-#### vhf_enabled 0x61
+#### vhf_enabled - family: 0x05 id: 0x13
 
 ```c
 "vhf_enabled": {
-    "id": "0x61",
+    "id": "0x13",
     "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x05"
 }
 ```
 
-#### vhf_num_of_packets_per_burst 0x67
+#### vhf_num_of_packets_per_burst family: 0x05 id: 0x19
 
 Set the default number of VHF "beeps" per burst
 
 ```c
 "vhf_num_of_packets_per_burst": {
-    "id": "0x67",
+    "id": "0x19",
     "default": 1,
     "min": 1,
     "max": 255,
     "length": 1,
-    "conversion": "uint8"
+    "conversion": "uint8",
+    "family": "0x05"
 }
 ```
 
-#### vhf_time_between_packets_ms 0x68
+#### vhf_time_between_packets_ms family: 0x05 id: 0x1A
 
 Set the default time in between VHF "beeps" per single burst. **Only applicable when more than one
 packet is sent per burst.**
 
 ```c
 "vhf_time_between_packets_ms": {
-    "id": "0x68",
+    "id": "0x1A",
     "default": 250,
     "min": 1,
     "max": 10000,
     "length": 2,
-    "conversion": "uint16"
+    "conversion": "uint16",
+    "family": "0x05"
 }
 ```
 
-#### vhf_external_path 0x69
+#### vhf_external_path family: 0x05 id: 0x1B
 
 By default, VHF transmission is done using the on-board LoRaWAN antenna. Enabling the external path,
 the board will send the VHF transmission over the external VHF antenna connector.
@@ -75,43 +78,46 @@ the board will send the VHF transmission over the external VHF antenna connector
 
 ```c
 "vhf_external_path": {
-    "id": "0x69",
+    "id": "0x1B",
     "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x05"
 }
 ```
 
-#### vhf_tx_frequency_khz 0x6A
+#### vhf_tx_frequency_khz family: 0x05 id: 0x1B
 
 Command example: Set the VHF transmission frequency to 150000: `0x6A 0x04 0xF0 0x49 0x02 0x00` send
 to port 3.
 
 ```c
 "vhf_tx_frequency_khz": {
-    "id": "0x6A",
+    "id": "0x1C",
     "default": 150000,
     "min": 150000,
     "max": 300000,
     "length": 4,
-    "conversion": "uint32"
+    "conversion": "uint32",
+    "family": "0x05"
 }
 ```
 
-#### vhf_single_pulse_duration_ms 0x6B
+#### vhf_single_pulse_duration_ms family: 0x05 id: 0x1D
 
 Sets the duration of each pulse inside of a burst.
 
 ```c
 "vhf_single_pulse_duration_ms": {
-    "id": "0x6B",
-    "default": 20,
+    "id": "0x1D",
+    "default": 18,
     "min": 5,
     "max": 10000,
     "length": 2,
-    "conversion": "uint16"
+    "conversion": "uint16",
+    "family": "0x05"
 }
 ```
 
@@ -120,7 +126,8 @@ Sets the duration of each pulse inside of a burst.
 VHF scheduling allows for two separate intervals
 
 Two-interval operation is supported. To use 2 intervals functionality, setting:
-`vhf_multiple_intervals` with id: `0x66` must be turned on with command: `66 01 00` send to port 3.
+`vhf_multiple_intervals` wit family: `0x05` id: `0x18` must be turned on with command: `05 18 01 01`
+send to port 3.
 
 We can divide each day into two intervals: `interval1` and `interval2`. The start of each interval
 is defined by `vhf_interval1_start` and `vhf_interval2_start` respectively. Supported values are
@@ -147,69 +154,74 @@ This means that at 07:00 UTC, the device will produce a VHF burst every 15 minut
 to `interval2` at 18:00 a VHF burst will be transmitted every hour until the next day at 7.00 when
 we switch back to `interval1`.
 
-Start of `interval1` can be changed with command: `64 01 val_in_hex_format` send on port 3.
+Start of `interval1` can be changed with command: `05 16 01 val_in_hex_format` send on port 3.
 
-#### vhf_interval1 0x62
+#### vhf_interval1 family: 0x05 id: 0x14
 
 ```c
 "vhf_interval1": {
-    "id": "0x62",
-    "default": 60,
+    "id": "0x14",
+    "default": 2,
     "min": 0,
     "max": 86400,
     "length": 4,
-    "conversion": "uint32"
+    "conversion": "uint32",
+    "family": "0x05"
 }
 ```
 
-#### vhf_interval1_start 0x64
+#### vhf_interval1_start family: 0x05 id: 0x16
 
 ```c
 "vhf_interval1_start": {
-    "id": "0x64",
+    "id": "0x16",
     "default": 7,
     "min": 0,
     "max": 23,
     "length": 1,
-    "conversion": "uint8"
+    "conversion": "uint8",
+    "family": "0x05"
 }
 ```
 
-#### vhf_multiple_intervals 0x66
+#### vhf_multiple_intervals family: 0x05 id: 0x18
 
 ```c
 "vhf_multiple_intervals": {
-    "id": "0x66",
+    "id": "0x18",
     "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x05"
 }
 ```
 
-#### vhf_interval2 0x63
+#### vhf_interval2 family: 0x05 id: 0x15
 
 ```c
 "vhf_interval2": {
-    "id": "0x63",
-    "default": 60,
+    "id": "0x15",
+    "default": 2,
     "min": 0,
     "max": 86400,
     "length": 4,
-    "conversion": "uint32"
+    "conversion": "uint32",
+    "family": "0x05"
 }
 ```
 
-#### vhf_interval2_start 0x65
+#### vhf_interval2_start family: 0x05 id: 0x17
 
 ```c
 "vhf_interval2_start": {
-    "id": "0x65",
+    "id": "0x17",
     "default": 19,
     "min": 0,
     "max": 23,
     "length": 1,
-    "conversion": "uint8"
+    "conversion": "uint8",
+    "family": "0x05"
 }
 ```

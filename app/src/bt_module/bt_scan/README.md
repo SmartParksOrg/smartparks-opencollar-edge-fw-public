@@ -41,12 +41,13 @@ Configurable settings:
 
 ### Filter types
 
-| Filter               | Filter type description           | Enumeration |
-| -------------------- | --------------------------------- | ----------- |
-| BT_SCAN_FILTER_NONE  | Don't filter                      | 0           |
-| BT_SCAN_FILTER_SP    | SmartParks manufacturer ID        | 1           |
-| BT_SCAN_FILTER_MAC   | MAC address (not implemented yet) | 2           |
-| BT_SCAN_FILTER_PHONE | Phone/mobile device               | 3           |
+| Filter                                    | Filter type description                           | Enumeration |
+| ----------------------------------------- | ------------------------------------------------- | ----------- |
+| BT_SCAN_FILTER_NONE                       | Don't filter                                      | 0           |
+| BT_SCAN_FILTER_ONLY_MANUFACTURER_ID       | Only the configured manufacturer ID               | 1           |
+| BT_SCAN_FILTER_MAC                        | MAC address (not implemented yet)                 | 2           |
+| BT_SCAN_FILTER_PHONE                      | Phone/mobile device                               | 3           |
+| BT_SCAN_FILTER_ALL_EXCEPT_MANUFACTURER_ID | All devices except the configured manufacturer ID | 4           |
 
 ---
 
@@ -60,16 +61,20 @@ Debugging of the module is possible with the following setting:
 
 ### Manufacturer ID
 
-Scan for devices with specific manufacturer ID.
+Filter devices using a specific manufacturer ID. `BT_SCAN_FILTER_ONLY_MANUFACTURER_ID` accepts only
+advertisements containing this ID, while `BT_SCAN_FILTER_ALL_EXCEPT_MANUFACTURER_ID` accepts all
+advertisements that do not contain it. Advertisements without valid manufacturer data pass the
+`BT_SCAN_FILTER_ALL_EXCEPT_MANUFACTURER_ID` filter.
 
 ```json
 "ble_scan_manufacturer_id": {
-    "id": "0x72",
+    "id": "0x0F",
     "default": 2657,
     "min": 0,
     "max": 65535,
     "length": 2,
-    "conversion": "uint16"
+    "conversion": "uint16",
+    "family": "0x04"
 }
 ```
 

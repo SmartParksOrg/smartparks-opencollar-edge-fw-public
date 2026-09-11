@@ -4,6 +4,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [8.0.0] - 2026-09-11
+
+### Added
+
+- Add Bluetooth scan filters for including or excluding devices by manufacturer ID.
+- Add family byte to user settings, expanding the user settings structure.
+- Add reboot-persistent LoRa join session support.
+- Add deletion exception for LICENSE file to public release workflow.
+- Add support for freeedge v1.7.0 hardware.
+
+### Fixed
+
+- Fix GPS reset handling by cold-resetting the ublox module. GPS fix retries now mean actual retries (instead of retries-1).
+- Fix provisioning rx tx tests reading inconsistent RSSI values due to lora chip de-initialization.
+
 ## [7.3.0] - 2026-04-09
 
 ### Added
@@ -710,7 +725,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Remove flash msg length constrain for lr gps messages - we get extra 4 bytes, due to timestamp size
 - Remove Rhinoedge HW 1.4 from the release script.
 
-[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.3.0...HEAD
+[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.0...HEAD
+[8.0.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.3.0...v8.0.0
 [7.3.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.2.0...v7.2.0
 [7.2.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.2.0...v7.2.0

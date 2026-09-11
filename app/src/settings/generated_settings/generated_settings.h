@@ -22,11 +22,11 @@
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
 
 /* Settings helper functions */
-uint8_t check_setting_id(uint8_t id);
-uint8_t check_value_id(uint8_t id);
-uint8_t get_setting_len(uint8_t id);
-bool validate_setting(uint8_t id, uint8_t *data);
-uint8_t get_value_len(uint8_t id);
+uint8_t check_setting_id(uint8_t family, uint8_t id);
+uint8_t check_value_id(uint8_t family, uint8_t id);
+uint8_t get_setting_len(uint8_t family, uint8_t id);
+bool validate_setting(uint8_t family, uint8_t id, uint8_t *data);
+uint8_t get_value_len(uint8_t family, uint8_t id);
 uint8_t get_message_port(uint8_t id);
 
 /* Check send/store flag */

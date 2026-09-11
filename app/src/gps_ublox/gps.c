@@ -109,6 +109,8 @@ struct context {
 	int hot_retry;
 	/* Last fix success */
 	bool last_fix_success;
+	/* Automatic fix retry limit reached */
+	bool retry_exhausted;
 
 	/* Fix start uptime */
 	uint64_t fix_start;
@@ -144,6 +146,7 @@ static struct context prv_ctx = {.com = I2C_DEV,
 				 .hot_fix = false,
 				 .cold_retry = 0,
 				 .hot_retry = 0,
+				 .retry_exhausted = false,
 				 .fix_start = 0,
 				 .last_fix_try = 0,
 				 .ttf = 0,
@@ -343,14 +346,18 @@ static void gps_update_send_interval(uint8_t interval_type)
 			FIX_MINIMUM_INTERVAL);
 		if (interval_type == 1) {
 			Main_settings.ublox_send_interval->def_val = FIX_MINIMUM_INTERVAL;
-			nvs_storage_write(Main_settings.ublox_send_interval->id,
-					  &Main_settings.ublox_send_interval->def_val,
-					  Main_settings.ublox_send_interval->len);
+			nvs_storage_write(
+				MAKE_SETTING_KEY(Main_settings.ublox_send_interval->family,
+						 Main_settings.ublox_send_interval->id),
+				&Main_settings.ublox_send_interval->def_val,
+				Main_settings.ublox_send_interval->len);
 		} else {
 			Main_settings.ublox_send_interval_2->def_val = FIX_MINIMUM_INTERVAL;
-			nvs_storage_write(Main_settings.ublox_send_interval_2->id,
-					  &Main_settings.ublox_send_interval_2->def_val,
-					  Main_settings.ublox_send_interval_2->len);
+			nvs_storage_write(
+				MAKE_SETTING_KEY(Main_settings.ublox_send_interval_2->family,
+						 Main_settings.ublox_send_interval_2->id),
+				&Main_settings.ublox_send_interval_2->def_val,
+				Main_settings.ublox_send_interval_2->len);
 		}
 	}
 	prv_ctx.send_interval = prv_ctx.default_send_interval;
@@ -449,10 +456,7 @@ static void gps_check_active_tracking(void)
 			gps_com_disable();
 		}
 
-		prv_ctx.cold_retry = 0;
-		prv_ctx.cold_fix = false;
-		prv_ctx.hot_retry = 0;
-		prv_ctx.hot_fix = false;
+		gps_reset_fix_state();
 	}
 }
 
@@ -583,6 +587,7 @@ int gps_init(void)
 	prv_ctx.send_interval = prv_ctx.default_send_interval;
 	prv_ctx.interval_type = 1;
 	prv_ctx.skipped_attempts = 0;
+	gps_reset_fix_state();
 
 	return 0;
 }
@@ -590,29 +595,54 @@ int gps_init(void)
 int gps_reset(void)
 {
 	LOG_WRN("Reset GPS module!");
+	int err = 0;
+
+	/* Prevent fix attempts until communication with the reset module is verified. */
+	prv_ctx.enabled = false;
 
 #if DT_NODE_EXISTS(GPS_VBCK_NODE)
-	/* Power off */
+	/* Clear backup data so the receiver performs a cold start. */
 	gpio_pin_set_dt(&gpio_dev_vbck, 0);
-	sys_err.ublox = -EIO;
 #else
 	LOG_ERR("VBCK pin not defined in DT");
 #endif
 
 	gps_power(1);
-	gps_ublox_reset();
-	k_sleep(K_MSEC(2000));
+	err = gps_ublox_reset();
+	if (!err) {
+		k_sleep(K_MSEC(2000));
+
+		/* Verify that the receiver is available again after the reset. */
+		if (prv_ctx.com == I2C_DEV) {
+			err = gps_ublox_begin_i2c(gps_dev);
+		} else {
+			err = gps_ublox_begin_serial(gps_dev);
+		}
+	}
 	gps_power(0);
 
-	/* int err = gps_init(); */
-	sys_err.ublox = 0;
+	prv_ctx.enabled = (err == 0);
+	sys_err.ublox = err;
+	if (err) {
+		LOG_ERR("Failed to reinitialize Ublox GPS after reset: %d", err);
+		return err;
+	}
+
+	gps_reset_fix_state();
+	return 0;
+}
+
+void gps_reset_fix_state(void)
+{
 	prv_ctx.cold_fix = false;
 	prv_ctx.hot_fix = false;
 	prv_ctx.cold_retry = 0;
 	prv_ctx.hot_retry = 0;
+	prv_ctx.last_fix_success = false;
+	prv_ctx.retry_exhausted = false;
 	prv_ctx.skipped_attempts = 0;
-
-	return 0;
+	prv_ctx.send_interval = prv_ctx.default_send_interval;
+	sys_err.ublox_fix = 0;
 }
 
 void gps_stop(void)
@@ -803,10 +833,10 @@ int gps_get_fix(void)
 						"updated to: %d",
 						prv_ctx.send_interval);
 				}
-				if (prv_ctx.cold_retry == Main_settings.cold_fix_retry->def_val) {
-					prv_ctx.enabled = false;
-					sys_err.ublox = -EIO;
-					/* Turn off GPS */
+				/* The setting is the number of retries after the initial attempt.
+				 */
+				if (prv_ctx.cold_retry > Main_settings.cold_fix_retry->def_val) {
+					prv_ctx.retry_exhausted = true;
 				}
 			} else {
 				/* Clear buffer and flush data */
@@ -850,7 +880,9 @@ int gps_get_fix(void)
 				if (!prv_ctx.hot_fix) {
 					prv_ctx.hot_retry += 1; /* Increase retry count */
 				}
-				if (prv_ctx.hot_retry == Main_settings.hot_fix_retry->def_val) {
+				/* The setting is the number of retries after the initial attempt.
+				 */
+				if (prv_ctx.hot_retry > Main_settings.hot_fix_retry->def_val) {
 					prv_ctx.cold_fix = false;
 				}
 			}
@@ -866,6 +898,7 @@ int gps_get_fix(void)
 	/* Update ublox fix status */
 	if (prv_ctx.last_fix_success) {
 		prv_ctx.send_interval = prv_ctx.default_send_interval;
+		prv_ctx.retry_exhausted = false;
 		sys_err.ublox_fix = 0;
 	} else {
 		sys_err.ublox_fix = -EIO;
@@ -916,31 +949,30 @@ bool gps_send_interval(void)
 	/* Check if GPS enabled */
 	if (!prv_ctx.enabled) {
 		return false;
-	} else {
-		/* Motion detection can run even if GPS intervals are disabled. */
-		/* Check if minimum in-between-fix time elapsed */
-		if (((uint32_t)((k_uptime_get() - prv_ctx.last_fix_try) / 1000) >
-		     FIX_MINIMUM_INTERVAL)) {
-			/* Check if there were enough motion trigger events per user
-			 * defined duration to start new fix */
-			if (prv_gps_check_motion_detection_counter()) {
-				return true;
-			}
-		}
 	}
 
 	/* Check active tracking status */
 	gps_check_active_tracking();
+	if (prv_ctx.retry_exhausted) {
+		return false;
+	}
+
+	/* Motion detection can run even if GPS intervals are disabled. */
+	/* Check if minimum in-between-fix time elapsed */
+	if (((uint32_t)((k_uptime_get() - prv_ctx.last_fix_try) / 1000) > FIX_MINIMUM_INTERVAL)) {
+		/* Check if there were enough motion trigger events per user
+		 * defined duration to start new fix */
+		if (prv_gps_check_motion_detection_counter()) {
+			return true;
+		}
+	}
 
 	/* Check interval type */
 	uint8_t old_interval_type = prv_ctx.interval_type;
 	prv_ctx.interval_type = gps_check_time_interval_type();
 	/* Check if change */
 	if (old_interval_type != prv_ctx.interval_type) {
-		prv_ctx.cold_retry = 0;
-		prv_ctx.cold_fix = false;
-		prv_ctx.hot_retry = 0;
-		prv_ctx.hot_fix = false;
+		gps_reset_fix_state();
 	}
 
 	/* Check for settings update */

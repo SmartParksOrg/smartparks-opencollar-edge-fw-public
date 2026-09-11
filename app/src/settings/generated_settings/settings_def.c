@@ -2,37 +2,98 @@
 #include "settings_def.h"
 #include <stdio.h>
 
-value_uint8 tracker_type = {0x00, 0, 0, 15, 1, UINT8_T};
+#define MAKE_KEY(family, id) (((family) << 8) | (id))
+value_uint8 tracker_type = {0x00, 0, 0, 15, 1, UINT8_T, 0x02};
 
-value_uint32 lr_gps_interval = {0x01, 0, 0, 86400, 4, UINT32_T};
+value_uint32 status_send_interval = {0x01, 3600, 1, 86400, 4, UINT32_T, 0x02};
 
-value_uint32 ublox_send_interval = {0x02, 0, 0, 172800, 4, UINT32_T};
+value_uint32 init_time = {0x02, 1787788800, 1787788800, 4294967295, 4, UINT32_T, 0x02};
 
-value_uint32 status_send_interval = {0x03, 3600, 1, 86400, 4, UINT32_T};
+value_bool data_log = {0x03, true, false, true, 1, BOOL, 0x02};
 
-value_uint32 satellite_send_interval = {0x04, 86400, 0, 86400, 4, UINT32_T};
+value_uint32 wifi_scan_interval = {0x04, 0, 0, 86400, 4, UINT32_T, 0x02};
 
-value_int32 gps_init_lon = {0x05, 156447700, -1800000000, 1800000000, 4, INT32_T};
+value_uint32 wifi_scan_aggregated_interval = {0x05, 0, 0, 86400, 4, UINT32_T, 0x02};
 
-value_int32 gps_init_lat = {0x06, 465556280, -900000000, 900000000, 4, INT32_T};
+uint8_t device_name_def[8] = "";
+uint8_t device_name_min[8] = "";
+uint8_t device_name_max[8] = "";
 
-value_uint32 init_time = {0x07, 1606314575, 1606314575, 4294967295, 4, UINT32_T};
+value_byte_array device_name = {
+	0x06, device_name_def, device_name_min, device_name_max, 8, BYTE_ARRAY, 0x02};
 
-value_bool ble_adv = {0x08, true, false, true, 1, BOOL};
+uint8_t device_pin_def[4] = {0x00, 0x00, 0x00, 0x00};
+uint8_t device_pin_min[4] = {0x00, 0x00, 0x00, 0x00};
+uint8_t device_pin_max[4] = {0x00, 0x00, 0x00, 0x00};
 
-value_bool gnss_assisted_scan = {0x09, false, false, true, 1, BOOL};
+value_byte_array device_pin = {0x07, device_pin_def, device_pin_min, device_pin_max, 4, BYTE_ARRAY,
+			       0x02};
 
-value_uint32 gps_resend_interval = {0x0A, 0, 0, 86400, 4, UINT32_T};
+value_bool led_enabled = {0x08, true, false, true, 1, BOOL, 0x02};
 
-value_bool data_log = {0x0B, true, false, true, 1, BOOL};
+value_uint32 memfault_send_interval = {0x09, 0, 0, 86400, 4, UINT32_T, 0x02};
 
-value_uint32 lr_send_flag = {0x0C, 4162715375, 0, 4294967295, 4, UINT32_T};
+value_uint32 check_error_interval = {0x0A, 86400, 0, 2678400, 4, UINT32_T, 0x02};
 
-value_uint32 flash_store_flag = {0x0D, 876143, 0, 4294967295, 4, UINT32_T};
+value_uint32 flash_status_interval = {0x0B, 0, 0, 604800, 4, UINT32_T, 0x02};
 
-value_uint8 lr_adr = {0x0E, 3, 0, 15, 1, UINT8_T};
+value_bool wifi_scan_report_zero_connections_found = {0x0C, false, false, true, 1, BOOL, 0x02};
 
-value_uint8 lr_region = {0x0F, 1, 1, 13, 1, UINT8_T};
+value_uint32 lr_send_flag = {0x00, 4162715375, 0, 4294967295, 4, UINT32_T, 0x03};
+
+value_uint32 flash_store_flag = {0x01, 876143, 0, 4294967295, 4, UINT32_T, 0x03};
+
+value_uint32 sat_send_flag = {0x02, 16522, 0, 4294967295, 4, UINT32_T, 0x03};
+
+value_bool ble_adv = {0x00, true, false, true, 1, BOOL, 0x04};
+
+value_uint32 ble_advertisement_interval = {0x01, 500, 100, 10000, 4, UINT32_T, 0x04};
+
+value_uint32 ble_scan_duration = {0x02, 600, 50, 10000, 4, UINT32_T, 0x04};
+
+value_uint32 ble_scan_interval = {0x03, 0, 0, 86400, 4, UINT32_T, 0x04};
+
+value_uint32 ble_scan_aggregated_interval = {0x04, 0, 0, 86400, 4, UINT32_T, 0x04};
+
+value_uint8 ble_scan_filter = {0x05, 1, 0, 4, 1, UINT8_T, 0x04};
+
+value_uint32 ble_auto_disconnect = {0x06, 600, 0, 86400, 4, UINT32_T, 0x04};
+
+value_bool ble_scan_report_zero_connections_found = {0x07, false, false, true, 1, BOOL, 0x04};
+
+value_bool cmdq_enabled = {0x08, false, false, true, 1, BOOL, 0x04};
+
+value_uint32 cmdq_scan_duration = {0x09, 10000, 1, 10000, 4, UINT32_T, 0x04};
+
+value_uint32 cmdq_search_interval = {0x0A, 300, 1, 10000, 4, UINT32_T, 0x04};
+
+value_uint32 cmdq_on_no_detection_wait_duration = {0x0B, 1800, 1, 10000, 4, UINT32_T, 0x04};
+
+uint8_t cmdq_searched_mac_address_def[6] = {0xD8, 0x10, 0x68, 0xAC, 0xDA, 0xE4};
+uint8_t cmdq_searched_mac_address_min[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t cmdq_searched_mac_address_max[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+value_byte_array cmdq_searched_mac_address = {0x0C,
+					      cmdq_searched_mac_address_def,
+					      cmdq_searched_mac_address_min,
+					      cmdq_searched_mac_address_max,
+					      6,
+					      BYTE_ARRAY,
+					      0x04};
+
+value_uint32 cmdq_reporting_interval = {0x0D, 300, 1, 10000, 4, UINT32_T, 0x04};
+
+value_bool cmdq_report_zero_messages_to_be_sent = {0x0E, false, false, true, 1, BOOL, 0x04};
+
+value_uint16 ble_scan_manufacturer_id = {0x0F, 2657, 0, 65535, 2, UINT16_T, 0x04};
+
+value_uint32 lr_gps_interval = {0x00, 0, 0, 86400, 4, UINT32_T, 0x05};
+
+value_bool gnss_assisted_scan = {0x01, false, false, true, 1, BOOL, 0x05};
+
+value_uint8 lr_adr = {0x02, 3, 0, 15, 1, UINT8_T, 0x05};
+
+value_uint8 lr_region = {0x03, 1, 1, 13, 1, UINT8_T, 0x05};
 
 uint8_t app_key_def[16] = {0x8B, 0xCD, 0x49, 0x42, 0x11, 0x67, 0xDD, 0x03,
 			   0xBA, 0xD3, 0xAE, 0xEA, 0x98, 0xEF, 0xE4, 0x09};
@@ -41,120 +102,34 @@ uint8_t app_key_min[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 uint8_t app_key_max[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-value_byte_array app_key = {0x10, app_key_def, app_key_min, app_key_max, 16, BYTE_ARRAY};
+value_byte_array app_key = {0x04, app_key_def, app_key_min, app_key_max, 16, BYTE_ARRAY, 0x05};
 
 uint8_t device_eui_def[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t device_eui_min[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t device_eui_max[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-value_byte_array device_eui = {0x11, device_eui_def, device_eui_min, device_eui_max, 8, BYTE_ARRAY};
+value_byte_array device_eui = {0x05, device_eui_def, device_eui_min, device_eui_max, 8, BYTE_ARRAY,
+			       0x05};
 
 uint8_t app_eui_def[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t app_eui_min[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t app_eui_max[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-value_byte_array app_eui = {0x12, app_eui_def, app_eui_min, app_eui_max, 8, BYTE_ARRAY};
+value_byte_array app_eui = {0x06, app_eui_def, app_eui_min, app_eui_max, 8, BYTE_ARRAY, 0x05};
 
-value_uint32 horizontal_accuracy = {0x13, 50, 1, 1000, 4, UINT32_T};
+value_uint32 s_band_send_interval = {0x07, 0, 0, 604800, 4, UINT32_T, 0x05};
 
-value_uint8 cold_fix_retry = {0x14, 200, 1, 255, 1, UINT8_T};
+value_uint32 lr_join_flag = {0x08, 0, 0, 4294967295, 4, UINT32_T, 0x05};
 
-value_uint8 hot_fix_retry = {0x15, 4, 1, 255, 1, UINT8_T};
+value_uint32 lr_confirm_flag = {0x09, 0, 0, 4294967295, 4, UINT32_T, 0x05};
 
-value_uint16 cold_fix_timeout = {0x16, 200, 1, 600, 2, UINT16_T};
+value_uint16 lr_max_confirm_fail = {0x0A, 0, 0, 1000, 2, UINT16_T, 0x05};
 
-value_uint16 hot_fix_timeout = {0x17, 65, 1, 600, 2, UINT16_T};
+value_uint32 lr_messaging_retry_interval = {0x0B, 60, 0, 86400, 4, UINT32_T, 0x05};
 
-value_uint32 ble_advertisement_interval = {0x18, 500, 100, 10000, 4, UINT32_T};
+value_uint8 lr_messaging_retry_count = {0x0C, 1, 1, 5, 1, UINT8_T, 0x05};
 
-value_uint32 wifi_scan_interval = {0x19, 0, 0, 86400, 4, UINT32_T};
-
-value_uint32 wifi_scan_aggregated_interval = {0x1A, 0, 0, 86400, 4, UINT32_T};
-
-value_uint32 ble_scan_duration = {0x1B, 600, 50, 10000, 4, UINT32_T};
-
-value_uint32 ble_scan_interval = {0x1C, 0, 0, 86400, 4, UINT32_T};
-
-value_uint32 ble_scan_aggregated_interval = {0x1D, 0, 0, 86400, 4, UINT32_T};
-
-value_uint8 ble_scan_filter = {0x1E, 1, 0, 3, 1, UINT8_T};
-
-value_uint32 ble_auto_disconnect = {0x1F, 600, 0, 86400, 4, UINT32_T};
-
-value_uint32 s_band_send_interval = {0x20, 0, 0, 604800, 4, UINT32_T};
-
-uint8_t device_name_def[8] = "";
-uint8_t device_name_min[8] = "";
-uint8_t device_name_max[8] = "";
-
-value_byte_array device_name = {0x21, device_name_def, device_name_min, device_name_max,
-				8,    BYTE_ARRAY};
-
-value_uint32 lr_join_flag = {0x22, 0, 0, 4294967295, 4, UINT32_T};
-
-value_uint32 lr_confirm_flag = {0x23, 0, 0, 4294967295, 4, UINT32_T};
-
-value_uint16 lr_max_confirm_fail = {0x24, 0, 0, 1000, 2, UINT16_T};
-
-value_uint8 gps_backoff_factor = {0x25, 10, 10, 100, 1, UINT8_T};
-
-value_uint32 ublox_send_interval_2 = {0x26, 0, 0, 86400, 4, UINT32_T};
-
-value_uint8 ublox_interval1_start = {0x27, 11, 0, 23, 1, UINT8_T};
-
-value_uint8 ublox_min_fix_time = {0x28, 5, 0, 30, 1, UINT8_T};
-
-value_bool ublox_multiple_intervals = {0x29, false, false, true, 1, BOOL};
-
-uint8_t device_pin_def[4] = {0x00, 0x00, 0x00, 0x00};
-uint8_t device_pin_min[4] = {0x00, 0x00, 0x00, 0x00};
-uint8_t device_pin_max[4] = {0x00, 0x00, 0x00, 0x00};
-
-value_byte_array device_pin = {0x2A, device_pin_def, device_pin_min, device_pin_max, 4, BYTE_ARRAY};
-
-value_bool ublox_active_tracking = {0x2B, false, false, true, 1, BOOL};
-
-value_bool led_enabled = {0x2C, true, false, true, 1, BOOL};
-
-value_uint8 motion_ths = {0x2D, 6, 0, 63, 1, UINT8_T};
-
-value_bool enable_motion_trig_gps = {0x2E, false, false, true, 1, BOOL};
-
-value_uint32 gps_triggered_interval = {0x2F, 60, 0, 86400, 4, UINT32_T};
-
-value_uint8 gps_skipped_triggered_interval = {0x30, 5, 0, 255, 1, UINT8_T};
-
-value_uint32 lr_messaging_retry_interval = {0x31, 60, 0, 86400, 4, UINT32_T};
-
-value_uint8 lr_messaging_retry_count = {0x32, 1, 1, 5, 1, UINT8_T};
-
-value_uint8 ublox_leave_on = {0x33, 15, 0, 60, 1, UINT8_T};
-
-value_uint32 memfault_send_interval = {0x34, 0, 0, 86400, 4, UINT32_T};
-
-value_uint32 rejoin_interval = {0x35, 3600, 600, 86400, 4, UINT32_T};
-
-value_uint32 check_error_interval = {0x36, 86400, 0, 2678400, 4, UINT32_T};
-
-value_uint8 gnss_constellation_to_use = {0x37, 3, 1, 3, 1, UINT8_T};
-
-value_uint8 ublox_min_satellites_timer = {0x38, 30, 5, 255, 1, UINT8_T};
-
-value_uint32 sat_send_flag = {0x39, 16522, 0, 4294967295, 4, UINT32_T};
-
-value_bool satellite_enabled = {0x3A, false, false, true, 1, BOOL};
-
-value_uint8 satellite_retry = {0x3B, 10, 1, 15, 1, UINT8_T};
-
-value_bool fence_enabled = {0x3F, false, false, true, 1, BOOL};
-
-value_uint32 fence_interval = {0x40, 60, 0, 604800, 4, UINT32_T};
-
-value_uint16 fence_sampling_length = {0x41, 10, 1, 60, 2, UINT16_T};
-
-value_uint32 fence_mv_scaling_factor = {0x42, 100000, 100, 1000000, 4, UINT32_T};
-
-value_uint32 flash_status_interval = {0x43, 0, 0, 604800, 4, UINT32_T};
+value_uint32 rejoin_interval = {0x0D, 3600, 600, 86400, 4, UINT32_T, 0x05};
 
 uint8_t lp0_app_key_def[16] = {0xEC, 0x7F, 0x38, 0x0E, 0x7A, 0xDF, 0xB2, 0xE5,
 			       0xC9, 0xBB, 0xDE, 0x5A, 0xC2, 0x16, 0x94, 0xA8};
@@ -163,8 +138,8 @@ uint8_t lp0_app_key_min[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 uint8_t lp0_app_key_max[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-value_byte_array lp0_app_key = {0x44, lp0_app_key_def, lp0_app_key_min, lp0_app_key_max,
-				16,   BYTE_ARRAY};
+value_byte_array lp0_app_key = {
+	0x0E, lp0_app_key_def, lp0_app_key_min, lp0_app_key_max, 16, BYTE_ARRAY, 0x05};
 
 uint8_t lp0_network_key_def[16] = {0xDB, 0x7E, 0x27, 0x26, 0xCF, 0xF5, 0x8C, 0x13,
 				   0x3A, 0x07, 0xB5, 0xA1, 0xB4, 0x00, 0xE1, 0xD0};
@@ -174,99 +149,157 @@ uint8_t lp0_network_key_max[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0
 				   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 value_byte_array lp0_network_key = {
-	0x45, lp0_network_key_def, lp0_network_key_min, lp0_network_key_max, 16, BYTE_ARRAY};
+	0x0F, lp0_network_key_def, lp0_network_key_min, lp0_network_key_max, 16, BYTE_ARRAY, 0x05};
 
 uint8_t lp0_dev_addr_def[4] = {0x26, 0x0B, 0xF6, 0xEF};
 uint8_t lp0_dev_addr_min[4] = {0x00, 0x00, 0x00, 0x00};
 uint8_t lp0_dev_addr_max[4] = {0x00, 0x00, 0x00, 0x00};
 
-value_byte_array lp0_dev_addr = {0x46, lp0_dev_addr_def, lp0_dev_addr_min, lp0_dev_addr_max,
-				 4,    BYTE_ARRAY};
+value_byte_array lp0_dev_addr = {
+	0x10, lp0_dev_addr_def, lp0_dev_addr_min, lp0_dev_addr_max, 4, BYTE_ARRAY, 0x05};
 
-value_bool ble_scan_report_zero_connections_found = {0x47, false, false, true, 1, BOOL};
+value_uint32 s_band_rf_frequency_hz = {0x11, 2008450000, 1980000000, 2100000000, 4, UINT32_T, 0x05};
 
-value_bool wifi_scan_report_zero_connections_found = {0x48, false, false, true, 1, BOOL};
+value_uint8 lr_adr_profile = {0x12, 3, 0, 3, 1, UINT8_T, 0x05};
 
-value_bool cmdq_enabled = {0x49, false, false, true, 1, BOOL};
+value_bool vhf_enabled = {0x13, false, false, true, 1, BOOL, 0x05};
 
-value_uint32 cmdq_scan_duration = {0x4A, 10000, 1, 10000, 4, UINT32_T};
+value_uint32 vhf_interval1 = {0x14, 2, 0, 86400, 4, UINT32_T, 0x05};
 
-value_uint32 cmdq_search_interval = {0x4B, 300, 1, 10000, 4, UINT32_T};
+value_uint32 vhf_interval2 = {0x15, 2, 0, 86400, 4, UINT32_T, 0x05};
 
-value_uint32 cmdq_on_no_detection_wait_duration = {0x4C, 1800, 1, 10000, 4, UINT32_T};
+value_uint8 vhf_interval1_start = {0x16, 7, 0, 23, 1, UINT8_T, 0x05};
 
-uint8_t cmdq_searched_mac_address_def[6] = {0xD8, 0x10, 0x68, 0xAC, 0xDA, 0xE4};
-uint8_t cmdq_searched_mac_address_min[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-uint8_t cmdq_searched_mac_address_max[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+value_uint8 vhf_interval2_start = {0x17, 19, 0, 23, 1, UINT8_T, 0x05};
 
-value_byte_array cmdq_searched_mac_address = {0x4D,
-					      cmdq_searched_mac_address_def,
-					      cmdq_searched_mac_address_min,
-					      cmdq_searched_mac_address_max,
-					      6,
-					      BYTE_ARRAY};
+value_bool vhf_multiple_intervals = {0x18, false, false, true, 1, BOOL, 0x05};
 
-value_uint32 cmdq_reporting_interval = {0x4E, 300, 1, 10000, 4, UINT32_T};
+value_uint8 vhf_num_of_packets_per_burst = {0x19, 1, 1, 255, 1, UINT8_T, 0x05};
 
-value_uint32 s_band_rf_frequency_hz = {0x4F, 2008450000, 1980000000, 2100000000, 4, UINT32_T};
+value_uint16 vhf_time_between_packets_ms = {0x1A, 250, 1, 10000, 2, UINT16_T, 0x05};
 
-value_bool cmdq_report_zero_messages_to_be_sent = {0x50, false, false, true, 1, BOOL};
+value_bool vhf_external_path = {0x1B, false, false, true, 1, BOOL, 0x05};
 
-value_uint8 ublox_interval2_start = {0x52, 19, 0, 23, 1, UINT8_T};
+value_uint32 vhf_tx_frequency_khz = {0x1C, 150000, 150000, 300000, 4, UINT32_T, 0x05};
 
-value_uint8 lr_adr_profile = {0x57, 3, 0, 3, 1, UINT8_T};
+value_uint16 vhf_single_pulse_duration_ms = {0x1D, 18, 5, 10000, 2, UINT16_T, 0x05};
 
-value_uint8 ublox_min_satellites = {0x5F, 3, 0, 255, 1, UINT8_T};
+value_uint8 s_band_send_mode = {0x1E, 1, 0, 2, 1, UINT8_T, 0x05};
 
-value_bool external_switch_detection_gpio_pin_power_enabled = {0x60, false, false, true, 1, BOOL};
+value_uint32 lp0_send_flag = {0x1F, 0, 0, 4294967295, 4, UINT32_T, 0x05};
 
-value_bool vhf_enabled = {0x61, false, false, true, 1, BOOL};
+value_uint32 lp0_tx_frequency_hz = {0x20, 869150000, 0, 2100000000, 4, UINT32_T, 0x05};
 
-value_uint32 vhf_interval1 = {0x62, 2, 0, 86400, 4, UINT32_T};
+value_uint32 lp0_rx_frequency_hz = {0x21, 869150000, 0, 2100000000, 4, UINT32_T, 0x05};
 
-value_uint32 vhf_interval2 = {0x63, 2, 0, 86400, 4, UINT32_T};
+uint8_t lp0_communication_params_def[4] = {0x07, 0x05, 0x01, 0x01};
+uint8_t lp0_communication_params_min[4] = {0x00, 0x00, 0x00, 0x00};
+uint8_t lp0_communication_params_max[4] = {0x00, 0x00, 0x00, 0x00};
 
-value_uint8 vhf_interval1_start = {0x64, 7, 0, 23, 1, UINT8_T};
+value_byte_array lp0_communication_params = {0x22,
+					     lp0_communication_params_def,
+					     lp0_communication_params_min,
+					     lp0_communication_params_max,
+					     4,
+					     BYTE_ARRAY,
+					     0x05};
 
-value_uint8 vhf_interval2_start = {0x65, 19, 0, 23, 1, UINT8_T};
+uint8_t lp0_node_params_def[5] = {0x00, 0x00, 0x0a, 0x01, 0x3c};
+uint8_t lp0_node_params_min[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t lp0_node_params_max[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
-value_bool vhf_multiple_intervals = {0x66, false, false, true, 1, BOOL};
+value_byte_array lp0_node_params = {
+	0x23, lp0_node_params_def, lp0_node_params_min, lp0_node_params_max, 5, BYTE_ARRAY, 0x05};
 
-value_uint8 vhf_num_of_packets_per_burst = {0x67, 1, 1, 255, 1, UINT8_T};
+value_uint32 ublox_send_interval = {0x00, 0, 0, 172800, 4, UINT32_T, 0x06};
 
-value_uint16 vhf_time_between_packets_ms = {0x68, 250, 1, 10000, 2, UINT16_T};
+value_int32 gps_init_lon = {0x01, 156447700, -1800000000, 1800000000, 4, INT32_T, 0x06};
 
-value_bool vhf_external_path = {0x69, false, false, true, 1, BOOL};
+value_int32 gps_init_lat = {0x02, 465556280, -900000000, 900000000, 4, INT32_T, 0x06};
 
-value_uint32 vhf_tx_frequency_khz = {0x6A, 150000, 150000, 300000, 4, UINT32_T};
+value_uint32 gps_resend_interval = {0x03, 0, 0, 86400, 4, UINT32_T, 0x06};
 
-value_uint16 vhf_single_pulse_duration_ms = {0x6B, 18, 5, 10000, 2, UINT16_T};
+value_uint32 horizontal_accuracy = {0x04, 50, 1, 1000, 4, UINT32_T, 0x06};
 
-value_uint8 s_band_send_mode = {0x6C, 1, 0, 2, 1, UINT8_T};
+value_uint8 cold_fix_retry = {0x05, 200, 1, 255, 1, UINT8_T, 0x06};
 
-value_bool fence_led_blink = {0x6D, false, false, true, 1, BOOL};
+value_uint8 hot_fix_retry = {0x06, 4, 1, 255, 1, UINT8_T, 0x06};
 
-value_uint8 gps_motion_triggered_min_num_of_triggers_per_interval = {0x6E, 0, 0, 255, 1, UINT8_T};
+value_uint16 cold_fix_timeout = {0x07, 200, 1, 600, 2, UINT16_T, 0x06};
 
-value_uint16 ble_scan_manufacturer_id = {0x72, 2657, 0, 65535, 2, UINT16_T};
+value_uint16 hot_fix_timeout = {0x08, 65, 1, 600, 2, UINT16_T, 0x06};
 
-value_bool accel_movement_data_fifo_enabled = {0x73, false, false, true, 1, BOOL};
+value_uint8 gps_backoff_factor = {0x09, 10, 10, 100, 1, UINT8_T, 0x06};
 
-value_uint16 accel_odr_hz = {0x74, 12, 0, 1600, 2, UINT16_T};
+value_uint32 ublox_send_interval_2 = {0x0A, 0, 0, 86400, 4, UINT32_T, 0x06};
 
-value_uint8 accel_g_scale = {0x75, 2, 2, 16, 1, UINT8_T};
+value_uint8 ublox_interval1_start = {0x0B, 11, 0, 23, 1, UINT8_T, 0x06};
 
-value_uint32 satellite_send_interval2 = {0x76, 86400, 0, 86400, 4, UINT32_T};
+value_uint8 ublox_min_fix_time = {0x0C, 5, 0, 30, 1, UINT8_T, 0x06};
 
-value_uint8 satellite_send_interval2_start = {0x77, 19, 0, 23, 1, UINT8_T};
+value_bool ublox_multiple_intervals = {0x0D, false, false, true, 1, BOOL, 0x06};
 
-value_bool satellite_multiple_intervals = {0x78, false, false, true, 1, BOOL};
+value_bool ublox_active_tracking = {0x0E, false, false, true, 1, BOOL, 0x06};
 
-value_uint8 satellite_interval1_start = {0x79, 7, 0, 23, 1, UINT8_T};
+value_uint32 gps_triggered_interval = {0x0F, 60, 0, 86400, 4, UINT32_T, 0x06};
 
-value_bool outdoor_detection_enabled = {0x7A, false, false, true, 1, BOOL};
+value_uint8 gps_skipped_triggered_interval = {0x10, 5, 0, 255, 1, UINT8_T, 0x06};
 
-value_uint8 outdoor_detection_tau = {0x7B, 11, 0, 100, 1, UINT8_T};
+value_uint8 ublox_leave_on = {0x11, 15, 0, 60, 1, UINT8_T, 0x06};
+
+value_uint8 gnss_constellation_to_use = {0x12, 3, 1, 3, 1, UINT8_T, 0x06};
+
+value_uint8 ublox_min_satellites_timer = {0x13, 30, 5, 255, 1, UINT8_T, 0x06};
+
+value_uint8 ublox_interval2_start = {0x14, 19, 0, 23, 1, UINT8_T, 0x06};
+
+value_uint8 ublox_min_satellites = {0x15, 3, 0, 255, 1, UINT8_T, 0x06};
+
+value_uint8 gps_motion_triggered_min_num_of_triggers_per_interval = {0x16, 0,       0,   255,
+								     1,    UINT8_T, 0x06};
+
+value_bool enable_motion_trig_gps = {0x17, false, false, true, 1, BOOL, 0x06};
+
+value_uint16 ublox_cold_fix_hour_interval = {0x18, 0, 0, 4320, 2, UINT16_T, 0x06};
+
+value_uint32 satellite_send_interval = {0x00, 86400, 0, 86400, 4, UINT32_T, 0x07};
+
+value_bool satellite_enabled = {0x01, false, false, true, 1, BOOL, 0x07};
+
+value_uint8 satellite_retry = {0x02, 10, 1, 15, 1, UINT8_T, 0x07};
+
+value_uint32 satellite_send_interval2 = {0x03, 86400, 0, 86400, 4, UINT32_T, 0x07};
+
+value_uint8 satellite_send_interval2_start = {0x04, 19, 0, 23, 1, UINT8_T, 0x07};
+
+value_bool satellite_multiple_intervals = {0x05, false, false, true, 1, BOOL, 0x07};
+
+value_uint8 satellite_interval1_start = {0x06, 7, 0, 23, 1, UINT8_T, 0x07};
+
+value_uint8 motion_ths = {0x00, 6, 0, 63, 1, UINT8_T, 0x08};
+
+value_bool fence_enabled = {0x01, false, false, true, 1, BOOL, 0x08};
+
+value_uint32 fence_interval = {0x02, 60, 0, 604800, 4, UINT32_T, 0x08};
+
+value_uint16 fence_sampling_length = {0x03, 10, 1, 60, 2, UINT16_T, 0x08};
+
+value_uint32 fence_mv_scaling_factor = {0x04, 100000, 100, 1000000, 4, UINT32_T, 0x08};
+
+value_bool external_switch_detection_gpio_pin_power_enabled = {0x05, false, false, true,
+							       1,    BOOL,  0x08};
+
+value_bool fence_led_blink = {0x06, false, false, true, 1, BOOL, 0x08};
+
+value_bool accel_movement_data_fifo_enabled = {0x07, false, false, true, 1, BOOL, 0x08};
+
+value_uint16 accel_odr_hz = {0x08, 12, 0, 1600, 2, UINT16_T, 0x08};
+
+value_uint8 accel_g_scale = {0x09, 2, 2, 16, 1, UINT8_T, 0x08};
+
+value_bool outdoor_detection_enabled = {0x0A, false, false, true, 1, BOOL, 0x08};
+
+value_uint8 outdoor_detection_tau = {0x0B, 11, 0, 100, 1, UINT8_T, 0x08};
 
 uint8_t outdoor_detection_parameters_def[12] = {0xCB, 0xEC, 0x6B, 0x12, 0x2A, 0x13,
 						0x79, 0x0F, 0x20, 0x1C, 0x00, 0x00};
@@ -275,157 +308,114 @@ uint8_t outdoor_detection_parameters_min[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x
 uint8_t outdoor_detection_parameters_max[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 						0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-value_byte_array outdoor_detection_parameters = {0x7C,
+value_byte_array outdoor_detection_parameters = {0x0C,
 						 outdoor_detection_parameters_def,
 						 outdoor_detection_parameters_min,
 						 outdoor_detection_parameters_max,
 						 12,
-						 BYTE_ARRAY};
+						 BYTE_ARRAY,
+						 0x08};
 
-value_uint16 ublox_cold_fix_hour_interval = {0x7D, 0, 0, 4320, 2, UINT16_T};
+value_bool external_switch_detection_enabled = {0x0E, false, false, true, 1, BOOL, 0x08};
 
-value_bool external_switch_detection_enabled = {0x7E, false, false, true, 1, BOOL};
+value_uint8 external_switch_detection_trigger_type = {0x0F, 0, 0, 1, 1, UINT8_T, 0x08};
 
-value_uint8 external_switch_detection_trigger_type = {0x7F, 0, 0, 1, 1, UINT8_T};
+value_uint16 external_switch_detection_trigger_debounce_ms = {0x10, 50, 0, 2000, 2, UINT16_T, 0x08};
 
-value_uint16 external_switch_detection_trigger_debounce_ms = {0x80, 50, 0, 2000, 2, UINT16_T};
+value_uint32 external_switch_detection_reporting_interval = {0x11, 3600,     0,   86400,
+							     4,    UINT32_T, 0x08};
 
-value_uint32 external_switch_detection_reporting_interval = {0x81, 3600, 0, 86400, 4, UINT32_T};
+value_bool external_switch_send_inactivity_report = {0x12, true, false, true, 1, BOOL, 0x08};
 
-value_bool external_switch_send_inactivity_report = {0x82, true, false, true, 1, BOOL};
+value_uint16 external_switch_minimal_report_duration_ms = {0x13, 250, 0, 65000, 2, UINT16_T, 0x08};
 
-value_uint16 external_switch_minimal_report_duration_ms = {0x83, 250, 0, 65000, 2, UINT16_T};
+value_uint8 external_switch_input_pull = {0x14, 1, 0, 2, 1, UINT8_T, 0x08};
 
-value_uint8 external_switch_input_pull = {0x84, 1, 0, 2, 1, UINT8_T};
+value_bool external_switch_counter_enabled = {0x15, false, false, true, 1, BOOL, 0x08};
 
-value_bool external_switch_counter_enabled = {0x85, false, false, true, 1, BOOL};
+value_bool air_quality_enabled = {0x16, false, false, true, 1, BOOL, 0x08};
 
-value_bool air_quality_enabled = {0x86, false, false, true, 1, BOOL};
-
-value_uint32 air_quality_interval = {0x87, 300, 10, 86400, 4, UINT32_T};
-
-value_uint32 lp0_send_flag = {0x88, 0, 0, 4294967295, 4, UINT32_T};
-
-value_uint32 lp0_tx_frequency_hz = {0x89, 869150000, 0, 2100000000, 4, UINT32_T};
-
-value_uint32 lp0_rx_frequency_hz = {0x8A, 869150000, 0, 2100000000, 4, UINT32_T};
-
-uint8_t lp0_communication_params_def[4] = {0x07, 0x05, 0x01, 0x01};
-uint8_t lp0_communication_params_min[4] = {0x00, 0x00, 0x00, 0x00};
-uint8_t lp0_communication_params_max[4] = {0x00, 0x00, 0x00, 0x00};
-
-value_byte_array lp0_communication_params = {0x8B,
-					     lp0_communication_params_def,
-					     lp0_communication_params_min,
-					     lp0_communication_params_max,
-					     4,
-					     BYTE_ARRAY};
-
-uint8_t lp0_node_params_def[5] = {0x00, 0x00, 0x0a, 0x01, 0x3c};
-uint8_t lp0_node_params_min[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
-uint8_t lp0_node_params_max[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
-
-value_byte_array lp0_node_params = {
-	0x8C, lp0_node_params_def, lp0_node_params_min, lp0_node_params_max, 5, BYTE_ARRAY};
+value_uint32 air_quality_interval = {0x17, 300, 10, 86400, 4, UINT32_T, 0x08};
 
 uint8_t id_array[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C,
-		      0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
-		      0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26,
-		      0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33,
-		      0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3F, 0x40, 0x41, 0x42, 0x43,
-		      0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50,
-		      0x52, 0x57, 0x5F, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
-		      0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
-		      0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86,
-		      0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C};
-uint8_t len_array[] = {1, 4, 4, 4, 4, 4, 4,  4, 1, 1, 4, 1, 4, 4, 1, 1,  16, 8, 8, 4, 1, 1, 2, 2, 4,
-		       4, 4, 4, 4, 4, 1, 4,  4, 8, 4, 4, 2, 1, 4, 1, 1,  1,  4, 1, 1, 1, 1, 4, 1, 4,
-		       1, 1, 4, 4, 4, 1, 1,  4, 1, 1, 1, 4, 2, 4, 4, 16, 16, 4, 1, 1, 1, 4, 4, 4, 6,
-		       4, 4, 1, 1, 1, 1, 1,  1, 4, 4, 1, 1, 1, 1, 2, 1,  4,  2, 1, 1, 1, 2, 1, 2, 1,
-		       4, 1, 1, 1, 1, 1, 12, 2, 1, 1, 2, 4, 1, 2, 1, 1,  1,  4, 4, 4, 4, 4, 5};
+		      0x00, 0x01, 0x02, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+		      0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+		      0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13,
+		      0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20,
+		      0x21, 0x22, 0x23, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+		      0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+		      0x17, 0x18, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00, 0x01, 0x02, 0x03,
+		      0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0E, 0x0F, 0x10, 0x11,
+		      0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
+uint8_t family_array[] = {
+	0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03,
+	0x03, 0x03, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+	0x04, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
+	0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
+	0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x06, 0x06,
+	0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
+	0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x07, 0x07, 0x07, 0x07, 0x07,
+	0x07, 0x07, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+	0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08};
+
+uint8_t len_array[] = {1, 4, 4, 1, 4,  4,  8, 4,  1, 4, 4, 4, 1, 4, 4, 4,  1, 4, 4, 4, 4,
+		       1, 4, 1, 1, 4,  4,  4, 6,  4, 1, 2, 4, 1, 1, 1, 16, 8, 8, 4, 4, 4,
+		       2, 4, 1, 4, 16, 16, 4, 4,  1, 1, 4, 4, 1, 1, 1, 1,  2, 1, 4, 2, 1,
+		       4, 4, 4, 4, 5,  4,  4, 4,  4, 4, 1, 1, 2, 2, 1, 4,  1, 1, 1, 1, 4,
+		       1, 1, 1, 1, 1,  1,  1, 1,  2, 4, 1, 1, 4, 1, 1, 1,  1, 1, 4, 2, 4,
+		       1, 1, 1, 2, 1,  1,  1, 12, 1, 1, 2, 4, 1, 2, 1, 1,  1, 4};
 
 main_settings Main_settings = {&tracker_type,
-			       &lr_gps_interval,
-			       &ublox_send_interval,
 			       &status_send_interval,
-			       &satellite_send_interval,
-			       &gps_init_lon,
-			       &gps_init_lat,
 			       &init_time,
-			       &ble_adv,
-			       &gnss_assisted_scan,
-			       &gps_resend_interval,
 			       &data_log,
-			       &lr_send_flag,
-			       &flash_store_flag,
-			       &lr_adr,
-			       &lr_region,
-			       &app_key,
-			       &device_eui,
-			       &app_eui,
-			       &horizontal_accuracy,
-			       &cold_fix_retry,
-			       &hot_fix_retry,
-			       &cold_fix_timeout,
-			       &hot_fix_timeout,
-			       &ble_advertisement_interval,
 			       &wifi_scan_interval,
 			       &wifi_scan_aggregated_interval,
+			       &device_name,
+			       &device_pin,
+			       &led_enabled,
+			       &memfault_send_interval,
+			       &check_error_interval,
+			       &flash_status_interval,
+			       &wifi_scan_report_zero_connections_found,
+			       &lr_send_flag,
+			       &flash_store_flag,
+			       &sat_send_flag,
+			       &ble_adv,
+			       &ble_advertisement_interval,
 			       &ble_scan_duration,
 			       &ble_scan_interval,
 			       &ble_scan_aggregated_interval,
 			       &ble_scan_filter,
 			       &ble_auto_disconnect,
-			       &s_band_send_interval,
-			       &device_name,
-			       &lr_join_flag,
-			       &lr_confirm_flag,
-			       &lr_max_confirm_fail,
-			       &gps_backoff_factor,
-			       &ublox_send_interval_2,
-			       &ublox_interval1_start,
-			       &ublox_min_fix_time,
-			       &ublox_multiple_intervals,
-			       &device_pin,
-			       &ublox_active_tracking,
-			       &led_enabled,
-			       &motion_ths,
-			       &enable_motion_trig_gps,
-			       &gps_triggered_interval,
-			       &gps_skipped_triggered_interval,
-			       &lr_messaging_retry_interval,
-			       &lr_messaging_retry_count,
-			       &ublox_leave_on,
-			       &memfault_send_interval,
-			       &rejoin_interval,
-			       &check_error_interval,
-			       &gnss_constellation_to_use,
-			       &ublox_min_satellites_timer,
-			       &sat_send_flag,
-			       &satellite_enabled,
-			       &satellite_retry,
-			       &fence_enabled,
-			       &fence_interval,
-			       &fence_sampling_length,
-			       &fence_mv_scaling_factor,
-			       &flash_status_interval,
-			       &lp0_app_key,
-			       &lp0_network_key,
-			       &lp0_dev_addr,
 			       &ble_scan_report_zero_connections_found,
-			       &wifi_scan_report_zero_connections_found,
 			       &cmdq_enabled,
 			       &cmdq_scan_duration,
 			       &cmdq_search_interval,
 			       &cmdq_on_no_detection_wait_duration,
 			       &cmdq_searched_mac_address,
 			       &cmdq_reporting_interval,
-			       &s_band_rf_frequency_hz,
 			       &cmdq_report_zero_messages_to_be_sent,
-			       &ublox_interval2_start,
+			       &ble_scan_manufacturer_id,
+			       &lr_gps_interval,
+			       &gnss_assisted_scan,
+			       &lr_adr,
+			       &lr_region,
+			       &app_key,
+			       &device_eui,
+			       &app_eui,
+			       &s_band_send_interval,
+			       &lr_join_flag,
+			       &lr_confirm_flag,
+			       &lr_max_confirm_fail,
+			       &lr_messaging_retry_interval,
+			       &lr_messaging_retry_count,
+			       &rejoin_interval,
+			       &lp0_app_key,
+			       &lp0_network_key,
+			       &lp0_dev_addr,
+			       &s_band_rf_frequency_hz,
 			       &lr_adr_profile,
-			       &ublox_min_satellites,
-			       &external_switch_detection_gpio_pin_power_enabled,
 			       &vhf_enabled,
 			       &vhf_interval1,
 			       &vhf_interval2,
@@ -438,20 +428,56 @@ main_settings Main_settings = {&tracker_type,
 			       &vhf_tx_frequency_khz,
 			       &vhf_single_pulse_duration_ms,
 			       &s_band_send_mode,
-			       &fence_led_blink,
+			       &lp0_send_flag,
+			       &lp0_tx_frequency_hz,
+			       &lp0_rx_frequency_hz,
+			       &lp0_communication_params,
+			       &lp0_node_params,
+			       &ublox_send_interval,
+			       &gps_init_lon,
+			       &gps_init_lat,
+			       &gps_resend_interval,
+			       &horizontal_accuracy,
+			       &cold_fix_retry,
+			       &hot_fix_retry,
+			       &cold_fix_timeout,
+			       &hot_fix_timeout,
+			       &gps_backoff_factor,
+			       &ublox_send_interval_2,
+			       &ublox_interval1_start,
+			       &ublox_min_fix_time,
+			       &ublox_multiple_intervals,
+			       &ublox_active_tracking,
+			       &gps_triggered_interval,
+			       &gps_skipped_triggered_interval,
+			       &ublox_leave_on,
+			       &gnss_constellation_to_use,
+			       &ublox_min_satellites_timer,
+			       &ublox_interval2_start,
+			       &ublox_min_satellites,
 			       &gps_motion_triggered_min_num_of_triggers_per_interval,
-			       &ble_scan_manufacturer_id,
-			       &accel_movement_data_fifo_enabled,
-			       &accel_odr_hz,
-			       &accel_g_scale,
+			       &enable_motion_trig_gps,
+			       &ublox_cold_fix_hour_interval,
+			       &satellite_send_interval,
+			       &satellite_enabled,
+			       &satellite_retry,
 			       &satellite_send_interval2,
 			       &satellite_send_interval2_start,
 			       &satellite_multiple_intervals,
 			       &satellite_interval1_start,
+			       &motion_ths,
+			       &fence_enabled,
+			       &fence_interval,
+			       &fence_sampling_length,
+			       &fence_mv_scaling_factor,
+			       &external_switch_detection_gpio_pin_power_enabled,
+			       &fence_led_blink,
+			       &accel_movement_data_fifo_enabled,
+			       &accel_odr_hz,
+			       &accel_g_scale,
 			       &outdoor_detection_enabled,
 			       &outdoor_detection_tau,
 			       &outdoor_detection_parameters,
-			       &ublox_cold_fix_hour_interval,
 			       &external_switch_detection_enabled,
 			       &external_switch_detection_trigger_type,
 			       &external_switch_detection_trigger_debounce_ms,
@@ -462,857 +488,691 @@ main_settings Main_settings = {&tracker_type,
 			       &external_switch_counter_enabled,
 			       &air_quality_enabled,
 			       &air_quality_interval,
-			       &lp0_send_flag,
-			       &lp0_tx_frequency_hz,
-			       &lp0_rx_frequency_hz,
-			       &lp0_communication_params,
-			       &lp0_node_params,
 			       123,
 			       id_array,
+			       family_array,
 			       len_array};
 
-void *get_setting_struct_by_id(uint8_t id)
+void *get_setting_struct_by_id(uint8_t family, uint8_t id)
 {
-	switch (id) {
-	case 0x00:
+	switch (MAKE_KEY(family, id)) {
+	case MAKE_KEY(0x02, 0x00):
 		return Main_settings.tracker_type;
-	case 0x01:
-		return Main_settings.lr_gps_interval;
-	case 0x02:
-		return Main_settings.ublox_send_interval;
-	case 0x03:
+	case MAKE_KEY(0x02, 0x01):
 		return Main_settings.status_send_interval;
-	case 0x04:
-		return Main_settings.satellite_send_interval;
-	case 0x05:
-		return Main_settings.gps_init_lon;
-	case 0x06:
-		return Main_settings.gps_init_lat;
-	case 0x07:
+	case MAKE_KEY(0x02, 0x02):
 		return Main_settings.init_time;
-	case 0x08:
-		return Main_settings.ble_adv;
-	case 0x09:
-		return Main_settings.gnss_assisted_scan;
-	case 0x0A:
-		return Main_settings.gps_resend_interval;
-	case 0x0B:
+	case MAKE_KEY(0x02, 0x03):
 		return Main_settings.data_log;
-	case 0x0C:
-		return Main_settings.lr_send_flag;
-	case 0x0D:
-		return Main_settings.flash_store_flag;
-	case 0x0E:
-		return Main_settings.lr_adr;
-	case 0x0F:
-		return Main_settings.lr_region;
-	case 0x10:
-		return Main_settings.app_key;
-	case 0x11:
-		return Main_settings.device_eui;
-	case 0x12:
-		return Main_settings.app_eui;
-	case 0x13:
-		return Main_settings.horizontal_accuracy;
-	case 0x14:
-		return Main_settings.cold_fix_retry;
-	case 0x15:
-		return Main_settings.hot_fix_retry;
-	case 0x16:
-		return Main_settings.cold_fix_timeout;
-	case 0x17:
-		return Main_settings.hot_fix_timeout;
-	case 0x18:
-		return Main_settings.ble_advertisement_interval;
-	case 0x19:
+	case MAKE_KEY(0x02, 0x04):
 		return Main_settings.wifi_scan_interval;
-	case 0x1A:
+	case MAKE_KEY(0x02, 0x05):
 		return Main_settings.wifi_scan_aggregated_interval;
-	case 0x1B:
-		return Main_settings.ble_scan_duration;
-	case 0x1C:
-		return Main_settings.ble_scan_interval;
-	case 0x1D:
-		return Main_settings.ble_scan_aggregated_interval;
-	case 0x1E:
-		return Main_settings.ble_scan_filter;
-	case 0x1F:
-		return Main_settings.ble_auto_disconnect;
-	case 0x20:
-		return Main_settings.s_band_send_interval;
-	case 0x21:
+	case MAKE_KEY(0x02, 0x06):
 		return Main_settings.device_name;
-	case 0x22:
-		return Main_settings.lr_join_flag;
-	case 0x23:
-		return Main_settings.lr_confirm_flag;
-	case 0x24:
-		return Main_settings.lr_max_confirm_fail;
-	case 0x25:
-		return Main_settings.gps_backoff_factor;
-	case 0x26:
-		return Main_settings.ublox_send_interval_2;
-	case 0x27:
-		return Main_settings.ublox_interval1_start;
-	case 0x28:
-		return Main_settings.ublox_min_fix_time;
-	case 0x29:
-		return Main_settings.ublox_multiple_intervals;
-	case 0x2A:
+	case MAKE_KEY(0x02, 0x07):
 		return Main_settings.device_pin;
-	case 0x2B:
-		return Main_settings.ublox_active_tracking;
-	case 0x2C:
+	case MAKE_KEY(0x02, 0x08):
 		return Main_settings.led_enabled;
-	case 0x2D:
-		return Main_settings.motion_ths;
-	case 0x2E:
-		return Main_settings.enable_motion_trig_gps;
-	case 0x2F:
-		return Main_settings.gps_triggered_interval;
-	case 0x30:
-		return Main_settings.gps_skipped_triggered_interval;
-	case 0x31:
-		return Main_settings.lr_messaging_retry_interval;
-	case 0x32:
-		return Main_settings.lr_messaging_retry_count;
-	case 0x33:
-		return Main_settings.ublox_leave_on;
-	case 0x34:
+	case MAKE_KEY(0x02, 0x09):
 		return Main_settings.memfault_send_interval;
-	case 0x35:
-		return Main_settings.rejoin_interval;
-	case 0x36:
+	case MAKE_KEY(0x02, 0x0A):
 		return Main_settings.check_error_interval;
-	case 0x37:
-		return Main_settings.gnss_constellation_to_use;
-	case 0x38:
-		return Main_settings.ublox_min_satellites_timer;
-	case 0x39:
-		return Main_settings.sat_send_flag;
-	case 0x3A:
-		return Main_settings.satellite_enabled;
-	case 0x3B:
-		return Main_settings.satellite_retry;
-	case 0x3F:
-		return Main_settings.fence_enabled;
-	case 0x40:
-		return Main_settings.fence_interval;
-	case 0x41:
-		return Main_settings.fence_sampling_length;
-	case 0x42:
-		return Main_settings.fence_mv_scaling_factor;
-	case 0x43:
+	case MAKE_KEY(0x02, 0x0B):
 		return Main_settings.flash_status_interval;
-	case 0x44:
-		return Main_settings.lp0_app_key;
-	case 0x45:
-		return Main_settings.lp0_network_key;
-	case 0x46:
-		return Main_settings.lp0_dev_addr;
-	case 0x47:
-		return Main_settings.ble_scan_report_zero_connections_found;
-	case 0x48:
+	case MAKE_KEY(0x02, 0x0C):
 		return Main_settings.wifi_scan_report_zero_connections_found;
-	case 0x49:
+	case MAKE_KEY(0x03, 0x00):
+		return Main_settings.lr_send_flag;
+	case MAKE_KEY(0x03, 0x01):
+		return Main_settings.flash_store_flag;
+	case MAKE_KEY(0x03, 0x02):
+		return Main_settings.sat_send_flag;
+	case MAKE_KEY(0x04, 0x00):
+		return Main_settings.ble_adv;
+	case MAKE_KEY(0x04, 0x01):
+		return Main_settings.ble_advertisement_interval;
+	case MAKE_KEY(0x04, 0x02):
+		return Main_settings.ble_scan_duration;
+	case MAKE_KEY(0x04, 0x03):
+		return Main_settings.ble_scan_interval;
+	case MAKE_KEY(0x04, 0x04):
+		return Main_settings.ble_scan_aggregated_interval;
+	case MAKE_KEY(0x04, 0x05):
+		return Main_settings.ble_scan_filter;
+	case MAKE_KEY(0x04, 0x06):
+		return Main_settings.ble_auto_disconnect;
+	case MAKE_KEY(0x04, 0x07):
+		return Main_settings.ble_scan_report_zero_connections_found;
+	case MAKE_KEY(0x04, 0x08):
 		return Main_settings.cmdq_enabled;
-	case 0x4A:
+	case MAKE_KEY(0x04, 0x09):
 		return Main_settings.cmdq_scan_duration;
-	case 0x4B:
+	case MAKE_KEY(0x04, 0x0A):
 		return Main_settings.cmdq_search_interval;
-	case 0x4C:
+	case MAKE_KEY(0x04, 0x0B):
 		return Main_settings.cmdq_on_no_detection_wait_duration;
-	case 0x4D:
+	case MAKE_KEY(0x04, 0x0C):
 		return Main_settings.cmdq_searched_mac_address;
-	case 0x4E:
+	case MAKE_KEY(0x04, 0x0D):
 		return Main_settings.cmdq_reporting_interval;
-	case 0x4F:
-		return Main_settings.s_band_rf_frequency_hz;
-	case 0x50:
+	case MAKE_KEY(0x04, 0x0E):
 		return Main_settings.cmdq_report_zero_messages_to_be_sent;
-	case 0x52:
-		return Main_settings.ublox_interval2_start;
-	case 0x57:
-		return Main_settings.lr_adr_profile;
-	case 0x5F:
-		return Main_settings.ublox_min_satellites;
-	case 0x60:
-		return Main_settings.external_switch_detection_gpio_pin_power_enabled;
-	case 0x61:
-		return Main_settings.vhf_enabled;
-	case 0x62:
-		return Main_settings.vhf_interval1;
-	case 0x63:
-		return Main_settings.vhf_interval2;
-	case 0x64:
-		return Main_settings.vhf_interval1_start;
-	case 0x65:
-		return Main_settings.vhf_interval2_start;
-	case 0x66:
-		return Main_settings.vhf_multiple_intervals;
-	case 0x67:
-		return Main_settings.vhf_num_of_packets_per_burst;
-	case 0x68:
-		return Main_settings.vhf_time_between_packets_ms;
-	case 0x69:
-		return Main_settings.vhf_external_path;
-	case 0x6A:
-		return Main_settings.vhf_tx_frequency_khz;
-	case 0x6B:
-		return Main_settings.vhf_single_pulse_duration_ms;
-	case 0x6C:
-		return Main_settings.s_band_send_mode;
-	case 0x6D:
-		return Main_settings.fence_led_blink;
-	case 0x6E:
-		return Main_settings.gps_motion_triggered_min_num_of_triggers_per_interval;
-	case 0x72:
+	case MAKE_KEY(0x04, 0x0F):
 		return Main_settings.ble_scan_manufacturer_id;
-	case 0x73:
-		return Main_settings.accel_movement_data_fifo_enabled;
-	case 0x74:
-		return Main_settings.accel_odr_hz;
-	case 0x75:
-		return Main_settings.accel_g_scale;
-	case 0x76:
-		return Main_settings.satellite_send_interval2;
-	case 0x77:
-		return Main_settings.satellite_send_interval2_start;
-	case 0x78:
-		return Main_settings.satellite_multiple_intervals;
-	case 0x79:
-		return Main_settings.satellite_interval1_start;
-	case 0x7A:
-		return Main_settings.outdoor_detection_enabled;
-	case 0x7B:
-		return Main_settings.outdoor_detection_tau;
-	case 0x7C:
-		return Main_settings.outdoor_detection_parameters;
-	case 0x7D:
-		return Main_settings.ublox_cold_fix_hour_interval;
-	case 0x7E:
-		return Main_settings.external_switch_detection_enabled;
-	case 0x7F:
-		return Main_settings.external_switch_detection_trigger_type;
-	case 0x80:
-		return Main_settings.external_switch_detection_trigger_debounce_ms;
-	case 0x81:
-		return Main_settings.external_switch_detection_reporting_interval;
-	case 0x82:
-		return Main_settings.external_switch_send_inactivity_report;
-	case 0x83:
-		return Main_settings.external_switch_minimal_report_duration_ms;
-	case 0x84:
-		return Main_settings.external_switch_input_pull;
-	case 0x85:
-		return Main_settings.external_switch_counter_enabled;
-	case 0x86:
-		return Main_settings.air_quality_enabled;
-	case 0x87:
-		return Main_settings.air_quality_interval;
-	case 0x88:
+	case MAKE_KEY(0x05, 0x00):
+		return Main_settings.lr_gps_interval;
+	case MAKE_KEY(0x05, 0x01):
+		return Main_settings.gnss_assisted_scan;
+	case MAKE_KEY(0x05, 0x02):
+		return Main_settings.lr_adr;
+	case MAKE_KEY(0x05, 0x03):
+		return Main_settings.lr_region;
+	case MAKE_KEY(0x05, 0x04):
+		return Main_settings.app_key;
+	case MAKE_KEY(0x05, 0x05):
+		return Main_settings.device_eui;
+	case MAKE_KEY(0x05, 0x06):
+		return Main_settings.app_eui;
+	case MAKE_KEY(0x05, 0x07):
+		return Main_settings.s_band_send_interval;
+	case MAKE_KEY(0x05, 0x08):
+		return Main_settings.lr_join_flag;
+	case MAKE_KEY(0x05, 0x09):
+		return Main_settings.lr_confirm_flag;
+	case MAKE_KEY(0x05, 0x0A):
+		return Main_settings.lr_max_confirm_fail;
+	case MAKE_KEY(0x05, 0x0B):
+		return Main_settings.lr_messaging_retry_interval;
+	case MAKE_KEY(0x05, 0x0C):
+		return Main_settings.lr_messaging_retry_count;
+	case MAKE_KEY(0x05, 0x0D):
+		return Main_settings.rejoin_interval;
+	case MAKE_KEY(0x05, 0x0E):
+		return Main_settings.lp0_app_key;
+	case MAKE_KEY(0x05, 0x0F):
+		return Main_settings.lp0_network_key;
+	case MAKE_KEY(0x05, 0x10):
+		return Main_settings.lp0_dev_addr;
+	case MAKE_KEY(0x05, 0x11):
+		return Main_settings.s_band_rf_frequency_hz;
+	case MAKE_KEY(0x05, 0x12):
+		return Main_settings.lr_adr_profile;
+	case MAKE_KEY(0x05, 0x13):
+		return Main_settings.vhf_enabled;
+	case MAKE_KEY(0x05, 0x14):
+		return Main_settings.vhf_interval1;
+	case MAKE_KEY(0x05, 0x15):
+		return Main_settings.vhf_interval2;
+	case MAKE_KEY(0x05, 0x16):
+		return Main_settings.vhf_interval1_start;
+	case MAKE_KEY(0x05, 0x17):
+		return Main_settings.vhf_interval2_start;
+	case MAKE_KEY(0x05, 0x18):
+		return Main_settings.vhf_multiple_intervals;
+	case MAKE_KEY(0x05, 0x19):
+		return Main_settings.vhf_num_of_packets_per_burst;
+	case MAKE_KEY(0x05, 0x1A):
+		return Main_settings.vhf_time_between_packets_ms;
+	case MAKE_KEY(0x05, 0x1B):
+		return Main_settings.vhf_external_path;
+	case MAKE_KEY(0x05, 0x1C):
+		return Main_settings.vhf_tx_frequency_khz;
+	case MAKE_KEY(0x05, 0x1D):
+		return Main_settings.vhf_single_pulse_duration_ms;
+	case MAKE_KEY(0x05, 0x1E):
+		return Main_settings.s_band_send_mode;
+	case MAKE_KEY(0x05, 0x1F):
 		return Main_settings.lp0_send_flag;
-	case 0x89:
+	case MAKE_KEY(0x05, 0x20):
 		return Main_settings.lp0_tx_frequency_hz;
-	case 0x8A:
+	case MAKE_KEY(0x05, 0x21):
 		return Main_settings.lp0_rx_frequency_hz;
-	case 0x8B:
+	case MAKE_KEY(0x05, 0x22):
 		return Main_settings.lp0_communication_params;
-	case 0x8C:
+	case MAKE_KEY(0x05, 0x23):
 		return Main_settings.lp0_node_params;
+	case MAKE_KEY(0x06, 0x00):
+		return Main_settings.ublox_send_interval;
+	case MAKE_KEY(0x06, 0x01):
+		return Main_settings.gps_init_lon;
+	case MAKE_KEY(0x06, 0x02):
+		return Main_settings.gps_init_lat;
+	case MAKE_KEY(0x06, 0x03):
+		return Main_settings.gps_resend_interval;
+	case MAKE_KEY(0x06, 0x04):
+		return Main_settings.horizontal_accuracy;
+	case MAKE_KEY(0x06, 0x05):
+		return Main_settings.cold_fix_retry;
+	case MAKE_KEY(0x06, 0x06):
+		return Main_settings.hot_fix_retry;
+	case MAKE_KEY(0x06, 0x07):
+		return Main_settings.cold_fix_timeout;
+	case MAKE_KEY(0x06, 0x08):
+		return Main_settings.hot_fix_timeout;
+	case MAKE_KEY(0x06, 0x09):
+		return Main_settings.gps_backoff_factor;
+	case MAKE_KEY(0x06, 0x0A):
+		return Main_settings.ublox_send_interval_2;
+	case MAKE_KEY(0x06, 0x0B):
+		return Main_settings.ublox_interval1_start;
+	case MAKE_KEY(0x06, 0x0C):
+		return Main_settings.ublox_min_fix_time;
+	case MAKE_KEY(0x06, 0x0D):
+		return Main_settings.ublox_multiple_intervals;
+	case MAKE_KEY(0x06, 0x0E):
+		return Main_settings.ublox_active_tracking;
+	case MAKE_KEY(0x06, 0x0F):
+		return Main_settings.gps_triggered_interval;
+	case MAKE_KEY(0x06, 0x10):
+		return Main_settings.gps_skipped_triggered_interval;
+	case MAKE_KEY(0x06, 0x11):
+		return Main_settings.ublox_leave_on;
+	case MAKE_KEY(0x06, 0x12):
+		return Main_settings.gnss_constellation_to_use;
+	case MAKE_KEY(0x06, 0x13):
+		return Main_settings.ublox_min_satellites_timer;
+	case MAKE_KEY(0x06, 0x14):
+		return Main_settings.ublox_interval2_start;
+	case MAKE_KEY(0x06, 0x15):
+		return Main_settings.ublox_min_satellites;
+	case MAKE_KEY(0x06, 0x16):
+		return Main_settings.gps_motion_triggered_min_num_of_triggers_per_interval;
+	case MAKE_KEY(0x06, 0x17):
+		return Main_settings.enable_motion_trig_gps;
+	case MAKE_KEY(0x06, 0x18):
+		return Main_settings.ublox_cold_fix_hour_interval;
+	case MAKE_KEY(0x07, 0x00):
+		return Main_settings.satellite_send_interval;
+	case MAKE_KEY(0x07, 0x01):
+		return Main_settings.satellite_enabled;
+	case MAKE_KEY(0x07, 0x02):
+		return Main_settings.satellite_retry;
+	case MAKE_KEY(0x07, 0x03):
+		return Main_settings.satellite_send_interval2;
+	case MAKE_KEY(0x07, 0x04):
+		return Main_settings.satellite_send_interval2_start;
+	case MAKE_KEY(0x07, 0x05):
+		return Main_settings.satellite_multiple_intervals;
+	case MAKE_KEY(0x07, 0x06):
+		return Main_settings.satellite_interval1_start;
+	case MAKE_KEY(0x08, 0x00):
+		return Main_settings.motion_ths;
+	case MAKE_KEY(0x08, 0x01):
+		return Main_settings.fence_enabled;
+	case MAKE_KEY(0x08, 0x02):
+		return Main_settings.fence_interval;
+	case MAKE_KEY(0x08, 0x03):
+		return Main_settings.fence_sampling_length;
+	case MAKE_KEY(0x08, 0x04):
+		return Main_settings.fence_mv_scaling_factor;
+	case MAKE_KEY(0x08, 0x05):
+		return Main_settings.external_switch_detection_gpio_pin_power_enabled;
+	case MAKE_KEY(0x08, 0x06):
+		return Main_settings.fence_led_blink;
+	case MAKE_KEY(0x08, 0x07):
+		return Main_settings.accel_movement_data_fifo_enabled;
+	case MAKE_KEY(0x08, 0x08):
+		return Main_settings.accel_odr_hz;
+	case MAKE_KEY(0x08, 0x09):
+		return Main_settings.accel_g_scale;
+	case MAKE_KEY(0x08, 0x0A):
+		return Main_settings.outdoor_detection_enabled;
+	case MAKE_KEY(0x08, 0x0B):
+		return Main_settings.outdoor_detection_tau;
+	case MAKE_KEY(0x08, 0x0C):
+		return Main_settings.outdoor_detection_parameters;
+	case MAKE_KEY(0x08, 0x0E):
+		return Main_settings.external_switch_detection_enabled;
+	case MAKE_KEY(0x08, 0x0F):
+		return Main_settings.external_switch_detection_trigger_type;
+	case MAKE_KEY(0x08, 0x10):
+		return Main_settings.external_switch_detection_trigger_debounce_ms;
+	case MAKE_KEY(0x08, 0x11):
+		return Main_settings.external_switch_detection_reporting_interval;
+	case MAKE_KEY(0x08, 0x12):
+		return Main_settings.external_switch_send_inactivity_report;
+	case MAKE_KEY(0x08, 0x13):
+		return Main_settings.external_switch_minimal_report_duration_ms;
+	case MAKE_KEY(0x08, 0x14):
+		return Main_settings.external_switch_input_pull;
+	case MAKE_KEY(0x08, 0x15):
+		return Main_settings.external_switch_counter_enabled;
+	case MAKE_KEY(0x08, 0x16):
+		return Main_settings.air_quality_enabled;
+	case MAKE_KEY(0x08, 0x17):
+		return Main_settings.air_quality_interval;
 	default:
 		return NULL;
 	}
 }
 
-int get_setting_by_id(uint8_t id, uint8_t *bytes)
+int get_setting_by_id(uint8_t family, uint8_t id, uint8_t *bytes)
 {
-	switch (id) {
-	case 0x00:
+	switch (MAKE_KEY(family, id)) {
+	case MAKE_KEY(0x02, 0x00):
 		uint8_t_to_bytes(bytes, Main_settings.tracker_type->def_val);
 		return 1;
-	case 0x01:
-		uint32_t_to_bytes(bytes, Main_settings.lr_gps_interval->def_val);
-		return 4;
-	case 0x02:
-		uint32_t_to_bytes(bytes, Main_settings.ublox_send_interval->def_val);
-		return 4;
-	case 0x03:
+	case MAKE_KEY(0x02, 0x01):
 		uint32_t_to_bytes(bytes, Main_settings.status_send_interval->def_val);
 		return 4;
-	case 0x04:
-		uint32_t_to_bytes(bytes, Main_settings.satellite_send_interval->def_val);
-		return 4;
-	case 0x05:
-		int32_t_to_bytes(bytes, Main_settings.gps_init_lon->def_val);
-		return 4;
-	case 0x06:
-		int32_t_to_bytes(bytes, Main_settings.gps_init_lat->def_val);
-		return 4;
-	case 0x07:
+	case MAKE_KEY(0x02, 0x02):
 		uint32_t_to_bytes(bytes, Main_settings.init_time->def_val);
 		return 4;
-	case 0x08:
-		bool_to_bytes(bytes, Main_settings.ble_adv->def_val);
-		return 1;
-	case 0x09:
-		bool_to_bytes(bytes, Main_settings.gnss_assisted_scan->def_val);
-		return 1;
-	case 0x0A:
-		uint32_t_to_bytes(bytes, Main_settings.gps_resend_interval->def_val);
-		return 4;
-	case 0x0B:
+	case MAKE_KEY(0x02, 0x03):
 		bool_to_bytes(bytes, Main_settings.data_log->def_val);
 		return 1;
-	case 0x0C:
-		uint32_t_to_bytes(bytes, Main_settings.lr_send_flag->def_val);
-		return 4;
-	case 0x0D:
-		uint32_t_to_bytes(bytes, Main_settings.flash_store_flag->def_val);
-		return 4;
-	case 0x0E:
-		uint8_t_to_bytes(bytes, Main_settings.lr_adr->def_val);
-		return 1;
-	case 0x0F:
-		uint8_t_to_bytes(bytes, Main_settings.lr_region->def_val);
-		return 1;
-	case 0x10:
-		byte_array_to_bytes(bytes, Main_settings.app_key->def_val, 16);
-		return 16;
-	case 0x11:
-		byte_array_to_bytes(bytes, Main_settings.device_eui->def_val, 8);
-		return 8;
-	case 0x12:
-		byte_array_to_bytes(bytes, Main_settings.app_eui->def_val, 8);
-		return 8;
-	case 0x13:
-		uint32_t_to_bytes(bytes, Main_settings.horizontal_accuracy->def_val);
-		return 4;
-	case 0x14:
-		uint8_t_to_bytes(bytes, Main_settings.cold_fix_retry->def_val);
-		return 1;
-	case 0x15:
-		uint8_t_to_bytes(bytes, Main_settings.hot_fix_retry->def_val);
-		return 1;
-	case 0x16:
-		uint16_t_to_bytes(bytes, Main_settings.cold_fix_timeout->def_val);
-		return 2;
-	case 0x17:
-		uint16_t_to_bytes(bytes, Main_settings.hot_fix_timeout->def_val);
-		return 2;
-	case 0x18:
-		uint32_t_to_bytes(bytes, Main_settings.ble_advertisement_interval->def_val);
-		return 4;
-	case 0x19:
+	case MAKE_KEY(0x02, 0x04):
 		uint32_t_to_bytes(bytes, Main_settings.wifi_scan_interval->def_val);
 		return 4;
-	case 0x1A:
+	case MAKE_KEY(0x02, 0x05):
 		uint32_t_to_bytes(bytes, Main_settings.wifi_scan_aggregated_interval->def_val);
 		return 4;
-	case 0x1B:
-		uint32_t_to_bytes(bytes, Main_settings.ble_scan_duration->def_val);
-		return 4;
-	case 0x1C:
-		uint32_t_to_bytes(bytes, Main_settings.ble_scan_interval->def_val);
-		return 4;
-	case 0x1D:
-		uint32_t_to_bytes(bytes, Main_settings.ble_scan_aggregated_interval->def_val);
-		return 4;
-	case 0x1E:
-		uint8_t_to_bytes(bytes, Main_settings.ble_scan_filter->def_val);
-		return 1;
-	case 0x1F:
-		uint32_t_to_bytes(bytes, Main_settings.ble_auto_disconnect->def_val);
-		return 4;
-	case 0x20:
-		uint32_t_to_bytes(bytes, Main_settings.s_band_send_interval->def_val);
-		return 4;
-	case 0x21:
+	case MAKE_KEY(0x02, 0x06):
 		byte_array_to_bytes(bytes, Main_settings.device_name->def_val, 8);
 		return 8;
-	case 0x22:
-		uint32_t_to_bytes(bytes, Main_settings.lr_join_flag->def_val);
-		return 4;
-	case 0x23:
-		uint32_t_to_bytes(bytes, Main_settings.lr_confirm_flag->def_val);
-		return 4;
-	case 0x24:
-		uint16_t_to_bytes(bytes, Main_settings.lr_max_confirm_fail->def_val);
-		return 2;
-	case 0x25:
-		uint8_t_to_bytes(bytes, Main_settings.gps_backoff_factor->def_val);
-		return 1;
-	case 0x26:
-		uint32_t_to_bytes(bytes, Main_settings.ublox_send_interval_2->def_val);
-		return 4;
-	case 0x27:
-		uint8_t_to_bytes(bytes, Main_settings.ublox_interval1_start->def_val);
-		return 1;
-	case 0x28:
-		uint8_t_to_bytes(bytes, Main_settings.ublox_min_fix_time->def_val);
-		return 1;
-	case 0x29:
-		bool_to_bytes(bytes, Main_settings.ublox_multiple_intervals->def_val);
-		return 1;
-	case 0x2A:
+	case MAKE_KEY(0x02, 0x07):
 		byte_array_to_bytes(bytes, Main_settings.device_pin->def_val, 4);
 		return 4;
-	case 0x2B:
-		bool_to_bytes(bytes, Main_settings.ublox_active_tracking->def_val);
-		return 1;
-	case 0x2C:
+	case MAKE_KEY(0x02, 0x08):
 		bool_to_bytes(bytes, Main_settings.led_enabled->def_val);
 		return 1;
-	case 0x2D:
-		uint8_t_to_bytes(bytes, Main_settings.motion_ths->def_val);
-		return 1;
-	case 0x2E:
-		bool_to_bytes(bytes, Main_settings.enable_motion_trig_gps->def_val);
-		return 1;
-	case 0x2F:
-		uint32_t_to_bytes(bytes, Main_settings.gps_triggered_interval->def_val);
-		return 4;
-	case 0x30:
-		uint8_t_to_bytes(bytes, Main_settings.gps_skipped_triggered_interval->def_val);
-		return 1;
-	case 0x31:
-		uint32_t_to_bytes(bytes, Main_settings.lr_messaging_retry_interval->def_val);
-		return 4;
-	case 0x32:
-		uint8_t_to_bytes(bytes, Main_settings.lr_messaging_retry_count->def_val);
-		return 1;
-	case 0x33:
-		uint8_t_to_bytes(bytes, Main_settings.ublox_leave_on->def_val);
-		return 1;
-	case 0x34:
+	case MAKE_KEY(0x02, 0x09):
 		uint32_t_to_bytes(bytes, Main_settings.memfault_send_interval->def_val);
 		return 4;
-	case 0x35:
-		uint32_t_to_bytes(bytes, Main_settings.rejoin_interval->def_val);
-		return 4;
-	case 0x36:
+	case MAKE_KEY(0x02, 0x0A):
 		uint32_t_to_bytes(bytes, Main_settings.check_error_interval->def_val);
 		return 4;
-	case 0x37:
-		uint8_t_to_bytes(bytes, Main_settings.gnss_constellation_to_use->def_val);
-		return 1;
-	case 0x38:
-		uint8_t_to_bytes(bytes, Main_settings.ublox_min_satellites_timer->def_val);
-		return 1;
-	case 0x39:
-		uint32_t_to_bytes(bytes, Main_settings.sat_send_flag->def_val);
-		return 4;
-	case 0x3A:
-		bool_to_bytes(bytes, Main_settings.satellite_enabled->def_val);
-		return 1;
-	case 0x3B:
-		uint8_t_to_bytes(bytes, Main_settings.satellite_retry->def_val);
-		return 1;
-	case 0x3F:
-		bool_to_bytes(bytes, Main_settings.fence_enabled->def_val);
-		return 1;
-	case 0x40:
-		uint32_t_to_bytes(bytes, Main_settings.fence_interval->def_val);
-		return 4;
-	case 0x41:
-		uint16_t_to_bytes(bytes, Main_settings.fence_sampling_length->def_val);
-		return 2;
-	case 0x42:
-		uint32_t_to_bytes(bytes, Main_settings.fence_mv_scaling_factor->def_val);
-		return 4;
-	case 0x43:
+	case MAKE_KEY(0x02, 0x0B):
 		uint32_t_to_bytes(bytes, Main_settings.flash_status_interval->def_val);
 		return 4;
-	case 0x44:
-		byte_array_to_bytes(bytes, Main_settings.lp0_app_key->def_val, 16);
-		return 16;
-	case 0x45:
-		byte_array_to_bytes(bytes, Main_settings.lp0_network_key->def_val, 16);
-		return 16;
-	case 0x46:
-		byte_array_to_bytes(bytes, Main_settings.lp0_dev_addr->def_val, 4);
-		return 4;
-	case 0x47:
-		bool_to_bytes(bytes, Main_settings.ble_scan_report_zero_connections_found->def_val);
-		return 1;
-	case 0x48:
+	case MAKE_KEY(0x02, 0x0C):
 		bool_to_bytes(bytes,
 			      Main_settings.wifi_scan_report_zero_connections_found->def_val);
 		return 1;
-	case 0x49:
+	case MAKE_KEY(0x03, 0x00):
+		uint32_t_to_bytes(bytes, Main_settings.lr_send_flag->def_val);
+		return 4;
+	case MAKE_KEY(0x03, 0x01):
+		uint32_t_to_bytes(bytes, Main_settings.flash_store_flag->def_val);
+		return 4;
+	case MAKE_KEY(0x03, 0x02):
+		uint32_t_to_bytes(bytes, Main_settings.sat_send_flag->def_val);
+		return 4;
+	case MAKE_KEY(0x04, 0x00):
+		bool_to_bytes(bytes, Main_settings.ble_adv->def_val);
+		return 1;
+	case MAKE_KEY(0x04, 0x01):
+		uint32_t_to_bytes(bytes, Main_settings.ble_advertisement_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x04, 0x02):
+		uint32_t_to_bytes(bytes, Main_settings.ble_scan_duration->def_val);
+		return 4;
+	case MAKE_KEY(0x04, 0x03):
+		uint32_t_to_bytes(bytes, Main_settings.ble_scan_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x04, 0x04):
+		uint32_t_to_bytes(bytes, Main_settings.ble_scan_aggregated_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x04, 0x05):
+		uint8_t_to_bytes(bytes, Main_settings.ble_scan_filter->def_val);
+		return 1;
+	case MAKE_KEY(0x04, 0x06):
+		uint32_t_to_bytes(bytes, Main_settings.ble_auto_disconnect->def_val);
+		return 4;
+	case MAKE_KEY(0x04, 0x07):
+		bool_to_bytes(bytes, Main_settings.ble_scan_report_zero_connections_found->def_val);
+		return 1;
+	case MAKE_KEY(0x04, 0x08):
 		bool_to_bytes(bytes, Main_settings.cmdq_enabled->def_val);
 		return 1;
-	case 0x4A:
+	case MAKE_KEY(0x04, 0x09):
 		uint32_t_to_bytes(bytes, Main_settings.cmdq_scan_duration->def_val);
 		return 4;
-	case 0x4B:
+	case MAKE_KEY(0x04, 0x0A):
 		uint32_t_to_bytes(bytes, Main_settings.cmdq_search_interval->def_val);
 		return 4;
-	case 0x4C:
+	case MAKE_KEY(0x04, 0x0B):
 		uint32_t_to_bytes(bytes, Main_settings.cmdq_on_no_detection_wait_duration->def_val);
 		return 4;
-	case 0x4D:
+	case MAKE_KEY(0x04, 0x0C):
 		byte_array_to_bytes(bytes, Main_settings.cmdq_searched_mac_address->def_val, 6);
 		return 6;
-	case 0x4E:
+	case MAKE_KEY(0x04, 0x0D):
 		uint32_t_to_bytes(bytes, Main_settings.cmdq_reporting_interval->def_val);
 		return 4;
-	case 0x4F:
-		uint32_t_to_bytes(bytes, Main_settings.s_band_rf_frequency_hz->def_val);
-		return 4;
-	case 0x50:
+	case MAKE_KEY(0x04, 0x0E):
 		bool_to_bytes(bytes, Main_settings.cmdq_report_zero_messages_to_be_sent->def_val);
 		return 1;
-	case 0x52:
-		uint8_t_to_bytes(bytes, Main_settings.ublox_interval2_start->def_val);
+	case MAKE_KEY(0x04, 0x0F):
+		uint16_t_to_bytes(bytes, Main_settings.ble_scan_manufacturer_id->def_val);
+		return 2;
+	case MAKE_KEY(0x05, 0x00):
+		uint32_t_to_bytes(bytes, Main_settings.lr_gps_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x01):
+		bool_to_bytes(bytes, Main_settings.gnss_assisted_scan->def_val);
 		return 1;
-	case 0x57:
+	case MAKE_KEY(0x05, 0x02):
+		uint8_t_to_bytes(bytes, Main_settings.lr_adr->def_val);
+		return 1;
+	case MAKE_KEY(0x05, 0x03):
+		uint8_t_to_bytes(bytes, Main_settings.lr_region->def_val);
+		return 1;
+	case MAKE_KEY(0x05, 0x04):
+		byte_array_to_bytes(bytes, Main_settings.app_key->def_val, 16);
+		return 16;
+	case MAKE_KEY(0x05, 0x05):
+		byte_array_to_bytes(bytes, Main_settings.device_eui->def_val, 8);
+		return 8;
+	case MAKE_KEY(0x05, 0x06):
+		byte_array_to_bytes(bytes, Main_settings.app_eui->def_val, 8);
+		return 8;
+	case MAKE_KEY(0x05, 0x07):
+		uint32_t_to_bytes(bytes, Main_settings.s_band_send_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x08):
+		uint32_t_to_bytes(bytes, Main_settings.lr_join_flag->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x09):
+		uint32_t_to_bytes(bytes, Main_settings.lr_confirm_flag->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x0A):
+		uint16_t_to_bytes(bytes, Main_settings.lr_max_confirm_fail->def_val);
+		return 2;
+	case MAKE_KEY(0x05, 0x0B):
+		uint32_t_to_bytes(bytes, Main_settings.lr_messaging_retry_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x0C):
+		uint8_t_to_bytes(bytes, Main_settings.lr_messaging_retry_count->def_val);
+		return 1;
+	case MAKE_KEY(0x05, 0x0D):
+		uint32_t_to_bytes(bytes, Main_settings.rejoin_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x0E):
+		byte_array_to_bytes(bytes, Main_settings.lp0_app_key->def_val, 16);
+		return 16;
+	case MAKE_KEY(0x05, 0x0F):
+		byte_array_to_bytes(bytes, Main_settings.lp0_network_key->def_val, 16);
+		return 16;
+	case MAKE_KEY(0x05, 0x10):
+		byte_array_to_bytes(bytes, Main_settings.lp0_dev_addr->def_val, 4);
+		return 4;
+	case MAKE_KEY(0x05, 0x11):
+		uint32_t_to_bytes(bytes, Main_settings.s_band_rf_frequency_hz->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x12):
 		uint8_t_to_bytes(bytes, Main_settings.lr_adr_profile->def_val);
 		return 1;
-	case 0x5F:
-		uint8_t_to_bytes(bytes, Main_settings.ublox_min_satellites->def_val);
-		return 1;
-	case 0x60:
-		bool_to_bytes(
-			bytes,
-			Main_settings.external_switch_detection_gpio_pin_power_enabled->def_val);
-		return 1;
-	case 0x61:
+	case MAKE_KEY(0x05, 0x13):
 		bool_to_bytes(bytes, Main_settings.vhf_enabled->def_val);
 		return 1;
-	case 0x62:
+	case MAKE_KEY(0x05, 0x14):
 		uint32_t_to_bytes(bytes, Main_settings.vhf_interval1->def_val);
 		return 4;
-	case 0x63:
+	case MAKE_KEY(0x05, 0x15):
 		uint32_t_to_bytes(bytes, Main_settings.vhf_interval2->def_val);
 		return 4;
-	case 0x64:
+	case MAKE_KEY(0x05, 0x16):
 		uint8_t_to_bytes(bytes, Main_settings.vhf_interval1_start->def_val);
 		return 1;
-	case 0x65:
+	case MAKE_KEY(0x05, 0x17):
 		uint8_t_to_bytes(bytes, Main_settings.vhf_interval2_start->def_val);
 		return 1;
-	case 0x66:
+	case MAKE_KEY(0x05, 0x18):
 		bool_to_bytes(bytes, Main_settings.vhf_multiple_intervals->def_val);
 		return 1;
-	case 0x67:
+	case MAKE_KEY(0x05, 0x19):
 		uint8_t_to_bytes(bytes, Main_settings.vhf_num_of_packets_per_burst->def_val);
 		return 1;
-	case 0x68:
+	case MAKE_KEY(0x05, 0x1A):
 		uint16_t_to_bytes(bytes, Main_settings.vhf_time_between_packets_ms->def_val);
 		return 2;
-	case 0x69:
+	case MAKE_KEY(0x05, 0x1B):
 		bool_to_bytes(bytes, Main_settings.vhf_external_path->def_val);
 		return 1;
-	case 0x6A:
+	case MAKE_KEY(0x05, 0x1C):
 		uint32_t_to_bytes(bytes, Main_settings.vhf_tx_frequency_khz->def_val);
 		return 4;
-	case 0x6B:
+	case MAKE_KEY(0x05, 0x1D):
 		uint16_t_to_bytes(bytes, Main_settings.vhf_single_pulse_duration_ms->def_val);
 		return 2;
-	case 0x6C:
+	case MAKE_KEY(0x05, 0x1E):
 		uint8_t_to_bytes(bytes, Main_settings.s_band_send_mode->def_val);
 		return 1;
-	case 0x6D:
-		bool_to_bytes(bytes, Main_settings.fence_led_blink->def_val);
+	case MAKE_KEY(0x05, 0x1F):
+		uint32_t_to_bytes(bytes, Main_settings.lp0_send_flag->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x20):
+		uint32_t_to_bytes(bytes, Main_settings.lp0_tx_frequency_hz->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x21):
+		uint32_t_to_bytes(bytes, Main_settings.lp0_rx_frequency_hz->def_val);
+		return 4;
+	case MAKE_KEY(0x05, 0x22):
+		byte_array_to_bytes(bytes, Main_settings.lp0_communication_params->def_val, 4);
+		return 4;
+	case MAKE_KEY(0x05, 0x23):
+		byte_array_to_bytes(bytes, Main_settings.lp0_node_params->def_val, 5);
+		return 5;
+	case MAKE_KEY(0x06, 0x00):
+		uint32_t_to_bytes(bytes, Main_settings.ublox_send_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x06, 0x01):
+		int32_t_to_bytes(bytes, Main_settings.gps_init_lon->def_val);
+		return 4;
+	case MAKE_KEY(0x06, 0x02):
+		int32_t_to_bytes(bytes, Main_settings.gps_init_lat->def_val);
+		return 4;
+	case MAKE_KEY(0x06, 0x03):
+		uint32_t_to_bytes(bytes, Main_settings.gps_resend_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x06, 0x04):
+		uint32_t_to_bytes(bytes, Main_settings.horizontal_accuracy->def_val);
+		return 4;
+	case MAKE_KEY(0x06, 0x05):
+		uint8_t_to_bytes(bytes, Main_settings.cold_fix_retry->def_val);
 		return 1;
-	case 0x6E:
+	case MAKE_KEY(0x06, 0x06):
+		uint8_t_to_bytes(bytes, Main_settings.hot_fix_retry->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x07):
+		uint16_t_to_bytes(bytes, Main_settings.cold_fix_timeout->def_val);
+		return 2;
+	case MAKE_KEY(0x06, 0x08):
+		uint16_t_to_bytes(bytes, Main_settings.hot_fix_timeout->def_val);
+		return 2;
+	case MAKE_KEY(0x06, 0x09):
+		uint8_t_to_bytes(bytes, Main_settings.gps_backoff_factor->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x0A):
+		uint32_t_to_bytes(bytes, Main_settings.ublox_send_interval_2->def_val);
+		return 4;
+	case MAKE_KEY(0x06, 0x0B):
+		uint8_t_to_bytes(bytes, Main_settings.ublox_interval1_start->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x0C):
+		uint8_t_to_bytes(bytes, Main_settings.ublox_min_fix_time->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x0D):
+		bool_to_bytes(bytes, Main_settings.ublox_multiple_intervals->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x0E):
+		bool_to_bytes(bytes, Main_settings.ublox_active_tracking->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x0F):
+		uint32_t_to_bytes(bytes, Main_settings.gps_triggered_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x06, 0x10):
+		uint8_t_to_bytes(bytes, Main_settings.gps_skipped_triggered_interval->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x11):
+		uint8_t_to_bytes(bytes, Main_settings.ublox_leave_on->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x12):
+		uint8_t_to_bytes(bytes, Main_settings.gnss_constellation_to_use->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x13):
+		uint8_t_to_bytes(bytes, Main_settings.ublox_min_satellites_timer->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x14):
+		uint8_t_to_bytes(bytes, Main_settings.ublox_interval2_start->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x15):
+		uint8_t_to_bytes(bytes, Main_settings.ublox_min_satellites->def_val);
+		return 1;
+	case MAKE_KEY(0x06, 0x16):
 		uint8_t_to_bytes(
 			bytes, Main_settings.gps_motion_triggered_min_num_of_triggers_per_interval
 				       ->def_val);
 		return 1;
-	case 0x72:
-		uint16_t_to_bytes(bytes, Main_settings.ble_scan_manufacturer_id->def_val);
-		return 2;
-	case 0x73:
-		bool_to_bytes(bytes, Main_settings.accel_movement_data_fifo_enabled->def_val);
+	case MAKE_KEY(0x06, 0x17):
+		bool_to_bytes(bytes, Main_settings.enable_motion_trig_gps->def_val);
 		return 1;
-	case 0x74:
-		uint16_t_to_bytes(bytes, Main_settings.accel_odr_hz->def_val);
-		return 2;
-	case 0x75:
-		uint8_t_to_bytes(bytes, Main_settings.accel_g_scale->def_val);
-		return 1;
-	case 0x76:
-		uint32_t_to_bytes(bytes, Main_settings.satellite_send_interval2->def_val);
-		return 4;
-	case 0x77:
-		uint8_t_to_bytes(bytes, Main_settings.satellite_send_interval2_start->def_val);
-		return 1;
-	case 0x78:
-		bool_to_bytes(bytes, Main_settings.satellite_multiple_intervals->def_val);
-		return 1;
-	case 0x79:
-		uint8_t_to_bytes(bytes, Main_settings.satellite_interval1_start->def_val);
-		return 1;
-	case 0x7A:
-		bool_to_bytes(bytes, Main_settings.outdoor_detection_enabled->def_val);
-		return 1;
-	case 0x7B:
-		uint8_t_to_bytes(bytes, Main_settings.outdoor_detection_tau->def_val);
-		return 1;
-	case 0x7C:
-		byte_array_to_bytes(bytes, Main_settings.outdoor_detection_parameters->def_val, 12);
-		return 12;
-	case 0x7D:
+	case MAKE_KEY(0x06, 0x18):
 		uint16_t_to_bytes(bytes, Main_settings.ublox_cold_fix_hour_interval->def_val);
 		return 2;
-	case 0x7E:
+	case MAKE_KEY(0x07, 0x00):
+		uint32_t_to_bytes(bytes, Main_settings.satellite_send_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x07, 0x01):
+		bool_to_bytes(bytes, Main_settings.satellite_enabled->def_val);
+		return 1;
+	case MAKE_KEY(0x07, 0x02):
+		uint8_t_to_bytes(bytes, Main_settings.satellite_retry->def_val);
+		return 1;
+	case MAKE_KEY(0x07, 0x03):
+		uint32_t_to_bytes(bytes, Main_settings.satellite_send_interval2->def_val);
+		return 4;
+	case MAKE_KEY(0x07, 0x04):
+		uint8_t_to_bytes(bytes, Main_settings.satellite_send_interval2_start->def_val);
+		return 1;
+	case MAKE_KEY(0x07, 0x05):
+		bool_to_bytes(bytes, Main_settings.satellite_multiple_intervals->def_val);
+		return 1;
+	case MAKE_KEY(0x07, 0x06):
+		uint8_t_to_bytes(bytes, Main_settings.satellite_interval1_start->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x00):
+		uint8_t_to_bytes(bytes, Main_settings.motion_ths->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x01):
+		bool_to_bytes(bytes, Main_settings.fence_enabled->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x02):
+		uint32_t_to_bytes(bytes, Main_settings.fence_interval->def_val);
+		return 4;
+	case MAKE_KEY(0x08, 0x03):
+		uint16_t_to_bytes(bytes, Main_settings.fence_sampling_length->def_val);
+		return 2;
+	case MAKE_KEY(0x08, 0x04):
+		uint32_t_to_bytes(bytes, Main_settings.fence_mv_scaling_factor->def_val);
+		return 4;
+	case MAKE_KEY(0x08, 0x05):
+		bool_to_bytes(
+			bytes,
+			Main_settings.external_switch_detection_gpio_pin_power_enabled->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x06):
+		bool_to_bytes(bytes, Main_settings.fence_led_blink->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x07):
+		bool_to_bytes(bytes, Main_settings.accel_movement_data_fifo_enabled->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x08):
+		uint16_t_to_bytes(bytes, Main_settings.accel_odr_hz->def_val);
+		return 2;
+	case MAKE_KEY(0x08, 0x09):
+		uint8_t_to_bytes(bytes, Main_settings.accel_g_scale->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x0A):
+		bool_to_bytes(bytes, Main_settings.outdoor_detection_enabled->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x0B):
+		uint8_t_to_bytes(bytes, Main_settings.outdoor_detection_tau->def_val);
+		return 1;
+	case MAKE_KEY(0x08, 0x0C):
+		byte_array_to_bytes(bytes, Main_settings.outdoor_detection_parameters->def_val, 12);
+		return 12;
+	case MAKE_KEY(0x08, 0x0E):
 		bool_to_bytes(bytes, Main_settings.external_switch_detection_enabled->def_val);
 		return 1;
-	case 0x7F:
+	case MAKE_KEY(0x08, 0x0F):
 		uint8_t_to_bytes(bytes,
 				 Main_settings.external_switch_detection_trigger_type->def_val);
 		return 1;
-	case 0x80:
+	case MAKE_KEY(0x08, 0x10):
 		uint16_t_to_bytes(
 			bytes,
 			Main_settings.external_switch_detection_trigger_debounce_ms->def_val);
 		return 2;
-	case 0x81:
+	case MAKE_KEY(0x08, 0x11):
 		uint32_t_to_bytes(
 			bytes, Main_settings.external_switch_detection_reporting_interval->def_val);
 		return 4;
-	case 0x82:
+	case MAKE_KEY(0x08, 0x12):
 		bool_to_bytes(bytes, Main_settings.external_switch_send_inactivity_report->def_val);
 		return 1;
-	case 0x83:
+	case MAKE_KEY(0x08, 0x13):
 		uint16_t_to_bytes(
 			bytes, Main_settings.external_switch_minimal_report_duration_ms->def_val);
 		return 2;
-	case 0x84:
+	case MAKE_KEY(0x08, 0x14):
 		uint8_t_to_bytes(bytes, Main_settings.external_switch_input_pull->def_val);
 		return 1;
-	case 0x85:
+	case MAKE_KEY(0x08, 0x15):
 		bool_to_bytes(bytes, Main_settings.external_switch_counter_enabled->def_val);
 		return 1;
-	case 0x86:
+	case MAKE_KEY(0x08, 0x16):
 		bool_to_bytes(bytes, Main_settings.air_quality_enabled->def_val);
 		return 1;
-	case 0x87:
+	case MAKE_KEY(0x08, 0x17):
 		uint32_t_to_bytes(bytes, Main_settings.air_quality_interval->def_val);
 		return 4;
-	case 0x88:
-		uint32_t_to_bytes(bytes, Main_settings.lp0_send_flag->def_val);
-		return 4;
-	case 0x89:
-		uint32_t_to_bytes(bytes, Main_settings.lp0_tx_frequency_hz->def_val);
-		return 4;
-	case 0x8A:
-		uint32_t_to_bytes(bytes, Main_settings.lp0_rx_frequency_hz->def_val);
-		return 4;
-	case 0x8B:
-		byte_array_to_bytes(bytes, Main_settings.lp0_communication_params->def_val, 4);
-		return 4;
-	case 0x8C:
-		byte_array_to_bytes(bytes, Main_settings.lp0_node_params->def_val, 5);
-		return 5;
 	default:
 		return 0;
 	}
 }
 
-int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
+int set_setting_value_by_id(uint8_t family, uint8_t id, uint8_t *data, uint8_t len)
 {
-	switch (id) {
-	case 0x00:
+	switch (MAKE_KEY(family, id)) {
+	case MAKE_KEY(0x02, 0x00):
 		if (len == Main_settings.tracker_type->len) {
 			Main_settings.tracker_type->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x01:
-		if (len == Main_settings.lr_gps_interval->len) {
-			Main_settings.lr_gps_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x02:
-		if (len == Main_settings.ublox_send_interval->len) {
-			Main_settings.ublox_send_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x03:
+	case MAKE_KEY(0x02, 0x01):
 		if (len == Main_settings.status_send_interval->len) {
 			Main_settings.status_send_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x04:
-		if (len == Main_settings.satellite_send_interval->len) {
-			Main_settings.satellite_send_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x05:
-		if (len == Main_settings.gps_init_lon->len) {
-			Main_settings.gps_init_lon->def_val = bytes_to_int32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x06:
-		if (len == Main_settings.gps_init_lat->len) {
-			Main_settings.gps_init_lat->def_val = bytes_to_int32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x07:
+	case MAKE_KEY(0x02, 0x02):
 		if (len == Main_settings.init_time->len) {
 			Main_settings.init_time->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x08:
-		if (len <= Main_settings.ble_adv->len) {
-			Main_settings.ble_adv->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x09:
-		if (len <= Main_settings.gnss_assisted_scan->len) {
-			Main_settings.gnss_assisted_scan->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x0A:
-		if (len == Main_settings.gps_resend_interval->len) {
-			Main_settings.gps_resend_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x0B:
+	case MAKE_KEY(0x02, 0x03):
 		if (len <= Main_settings.data_log->len) {
 			Main_settings.data_log->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x0C:
-		if (len == Main_settings.lr_send_flag->len) {
-			Main_settings.lr_send_flag->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x0D:
-		if (len == Main_settings.flash_store_flag->len) {
-			Main_settings.flash_store_flag->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x0E:
-		if (len == Main_settings.lr_adr->len) {
-			Main_settings.lr_adr->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x0F:
-		if (len == Main_settings.lr_region->len) {
-			Main_settings.lr_region->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x10:
-		if (len <= Main_settings.app_key->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.app_key->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.app_key->len; i++) {
-				Main_settings.app_key->def_val[i] = '\0';
-			}
-		} else {
-			return -1;
-		}
-		break;
-	case 0x11:
-		if (len <= Main_settings.device_eui->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.device_eui->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.device_eui->len; i++) {
-				Main_settings.device_eui->def_val[i] = '\0';
-			}
-		} else {
-			return -1;
-		}
-		break;
-	case 0x12:
-		if (len <= Main_settings.app_eui->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.app_eui->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.app_eui->len; i++) {
-				Main_settings.app_eui->def_val[i] = '\0';
-			}
-		} else {
-			return -1;
-		}
-		break;
-	case 0x13:
-		if (len == Main_settings.horizontal_accuracy->len) {
-			Main_settings.horizontal_accuracy->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x14:
-		if (len == Main_settings.cold_fix_retry->len) {
-			Main_settings.cold_fix_retry->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x15:
-		if (len == Main_settings.hot_fix_retry->len) {
-			Main_settings.hot_fix_retry->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x16:
-		if (len == Main_settings.cold_fix_timeout->len) {
-			Main_settings.cold_fix_timeout->def_val = bytes_to_uint16_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x17:
-		if (len == Main_settings.hot_fix_timeout->len) {
-			Main_settings.hot_fix_timeout->def_val = bytes_to_uint16_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x18:
-		if (len == Main_settings.ble_advertisement_interval->len) {
-			Main_settings.ble_advertisement_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x19:
+	case MAKE_KEY(0x02, 0x04):
 		if (len == Main_settings.wifi_scan_interval->len) {
 			Main_settings.wifi_scan_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x1A:
+	case MAKE_KEY(0x02, 0x05):
 		if (len == Main_settings.wifi_scan_aggregated_interval->len) {
 			Main_settings.wifi_scan_aggregated_interval->def_val =
 				bytes_to_uint32_t(data);
@@ -1320,50 +1180,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x1B:
-		if (len == Main_settings.ble_scan_duration->len) {
-			Main_settings.ble_scan_duration->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x1C:
-		if (len == Main_settings.ble_scan_interval->len) {
-			Main_settings.ble_scan_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x1D:
-		if (len == Main_settings.ble_scan_aggregated_interval->len) {
-			Main_settings.ble_scan_aggregated_interval->def_val =
-				bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x1E:
-		if (len == Main_settings.ble_scan_filter->len) {
-			Main_settings.ble_scan_filter->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x1F:
-		if (len == Main_settings.ble_auto_disconnect->len) {
-			Main_settings.ble_auto_disconnect->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x20:
-		if (len == Main_settings.s_band_send_interval->len) {
-			Main_settings.s_band_send_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x21:
+	case MAKE_KEY(0x02, 0x06):
 		if (len <= Main_settings.device_name->len) {
 			for (int i = 0; i < len; i++) {
 				Main_settings.device_name->def_val[i] = data[i];
@@ -1375,63 +1192,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x22:
-		if (len == Main_settings.lr_join_flag->len) {
-			Main_settings.lr_join_flag->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x23:
-		if (len == Main_settings.lr_confirm_flag->len) {
-			Main_settings.lr_confirm_flag->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x24:
-		if (len == Main_settings.lr_max_confirm_fail->len) {
-			Main_settings.lr_max_confirm_fail->def_val = bytes_to_uint16_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x25:
-		if (len == Main_settings.gps_backoff_factor->len) {
-			Main_settings.gps_backoff_factor->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x26:
-		if (len == Main_settings.ublox_send_interval_2->len) {
-			Main_settings.ublox_send_interval_2->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x27:
-		if (len == Main_settings.ublox_interval1_start->len) {
-			Main_settings.ublox_interval1_start->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x28:
-		if (len == Main_settings.ublox_min_fix_time->len) {
-			Main_settings.ublox_min_fix_time->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x29:
-		if (len <= Main_settings.ublox_multiple_intervals->len) {
-			Main_settings.ublox_multiple_intervals->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x2A:
+	case MAKE_KEY(0x02, 0x07):
 		if (len <= Main_settings.device_pin->len) {
 			for (int i = 0; i < len; i++) {
 				Main_settings.device_pin->def_val[i] = data[i];
@@ -1443,207 +1204,35 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x2B:
-		if (len <= Main_settings.ublox_active_tracking->len) {
-			Main_settings.ublox_active_tracking->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x2C:
+	case MAKE_KEY(0x02, 0x08):
 		if (len <= Main_settings.led_enabled->len) {
 			Main_settings.led_enabled->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x2D:
-		if (len == Main_settings.motion_ths->len) {
-			Main_settings.motion_ths->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x2E:
-		if (len <= Main_settings.enable_motion_trig_gps->len) {
-			Main_settings.enable_motion_trig_gps->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x2F:
-		if (len == Main_settings.gps_triggered_interval->len) {
-			Main_settings.gps_triggered_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x30:
-		if (len == Main_settings.gps_skipped_triggered_interval->len) {
-			Main_settings.gps_skipped_triggered_interval->def_val =
-				bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x31:
-		if (len == Main_settings.lr_messaging_retry_interval->len) {
-			Main_settings.lr_messaging_retry_interval->def_val =
-				bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x32:
-		if (len == Main_settings.lr_messaging_retry_count->len) {
-			Main_settings.lr_messaging_retry_count->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x33:
-		if (len == Main_settings.ublox_leave_on->len) {
-			Main_settings.ublox_leave_on->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x34:
+	case MAKE_KEY(0x02, 0x09):
 		if (len == Main_settings.memfault_send_interval->len) {
 			Main_settings.memfault_send_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x35:
-		if (len == Main_settings.rejoin_interval->len) {
-			Main_settings.rejoin_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x36:
+	case MAKE_KEY(0x02, 0x0A):
 		if (len == Main_settings.check_error_interval->len) {
 			Main_settings.check_error_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x37:
-		if (len == Main_settings.gnss_constellation_to_use->len) {
-			Main_settings.gnss_constellation_to_use->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x38:
-		if (len == Main_settings.ublox_min_satellites_timer->len) {
-			Main_settings.ublox_min_satellites_timer->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x39:
-		if (len == Main_settings.sat_send_flag->len) {
-			Main_settings.sat_send_flag->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x3A:
-		if (len <= Main_settings.satellite_enabled->len) {
-			Main_settings.satellite_enabled->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x3B:
-		if (len == Main_settings.satellite_retry->len) {
-			Main_settings.satellite_retry->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x3F:
-		if (len <= Main_settings.fence_enabled->len) {
-			Main_settings.fence_enabled->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x40:
-		if (len == Main_settings.fence_interval->len) {
-			Main_settings.fence_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x41:
-		if (len == Main_settings.fence_sampling_length->len) {
-			Main_settings.fence_sampling_length->def_val = bytes_to_uint16_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x42:
-		if (len == Main_settings.fence_mv_scaling_factor->len) {
-			Main_settings.fence_mv_scaling_factor->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x43:
+	case MAKE_KEY(0x02, 0x0B):
 		if (len == Main_settings.flash_status_interval->len) {
 			Main_settings.flash_status_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x44:
-		if (len <= Main_settings.lp0_app_key->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.lp0_app_key->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.lp0_app_key->len; i++) {
-				Main_settings.lp0_app_key->def_val[i] = '\0';
-			}
-		} else {
-			return -1;
-		}
-		break;
-	case 0x45:
-		if (len <= Main_settings.lp0_network_key->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.lp0_network_key->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.lp0_network_key->len; i++) {
-				Main_settings.lp0_network_key->def_val[i] = '\0';
-			}
-		} else {
-			return -1;
-		}
-		break;
-	case 0x46:
-		if (len <= Main_settings.lp0_dev_addr->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.lp0_dev_addr->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.lp0_dev_addr->len; i++) {
-				Main_settings.lp0_dev_addr->def_val[i] = '\0';
-			}
-		} else {
-			return -1;
-		}
-		break;
-	case 0x47:
-		if (len <= Main_settings.ble_scan_report_zero_connections_found->len) {
-			Main_settings.ble_scan_report_zero_connections_found->def_val =
-				bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x48:
+	case MAKE_KEY(0x02, 0x0C):
 		if (len <= Main_settings.wifi_scan_report_zero_connections_found->len) {
 			Main_settings.wifi_scan_report_zero_connections_found->def_val =
 				bytes_to_uint8_t(data);
@@ -1651,28 +1240,107 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x49:
+	case MAKE_KEY(0x03, 0x00):
+		if (len == Main_settings.lr_send_flag->len) {
+			Main_settings.lr_send_flag->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x03, 0x01):
+		if (len == Main_settings.flash_store_flag->len) {
+			Main_settings.flash_store_flag->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x03, 0x02):
+		if (len == Main_settings.sat_send_flag->len) {
+			Main_settings.sat_send_flag->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x00):
+		if (len <= Main_settings.ble_adv->len) {
+			Main_settings.ble_adv->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x01):
+		if (len == Main_settings.ble_advertisement_interval->len) {
+			Main_settings.ble_advertisement_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x02):
+		if (len == Main_settings.ble_scan_duration->len) {
+			Main_settings.ble_scan_duration->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x03):
+		if (len == Main_settings.ble_scan_interval->len) {
+			Main_settings.ble_scan_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x04):
+		if (len == Main_settings.ble_scan_aggregated_interval->len) {
+			Main_settings.ble_scan_aggregated_interval->def_val =
+				bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x05):
+		if (len == Main_settings.ble_scan_filter->len) {
+			Main_settings.ble_scan_filter->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x06):
+		if (len == Main_settings.ble_auto_disconnect->len) {
+			Main_settings.ble_auto_disconnect->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x07):
+		if (len <= Main_settings.ble_scan_report_zero_connections_found->len) {
+			Main_settings.ble_scan_report_zero_connections_found->def_val =
+				bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x04, 0x08):
 		if (len <= Main_settings.cmdq_enabled->len) {
 			Main_settings.cmdq_enabled->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x4A:
+	case MAKE_KEY(0x04, 0x09):
 		if (len == Main_settings.cmdq_scan_duration->len) {
 			Main_settings.cmdq_scan_duration->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x4B:
+	case MAKE_KEY(0x04, 0x0A):
 		if (len == Main_settings.cmdq_search_interval->len) {
 			Main_settings.cmdq_search_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x4C:
+	case MAKE_KEY(0x04, 0x0B):
 		if (len == Main_settings.cmdq_on_no_detection_wait_duration->len) {
 			Main_settings.cmdq_on_no_detection_wait_duration->def_val =
 				bytes_to_uint32_t(data);
@@ -1680,7 +1348,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x4D:
+	case MAKE_KEY(0x04, 0x0C):
 		if (len <= Main_settings.cmdq_searched_mac_address->len) {
 			for (int i = 0; i < len; i++) {
 				Main_settings.cmdq_searched_mac_address->def_val[i] = data[i];
@@ -1692,21 +1360,14 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x4E:
+	case MAKE_KEY(0x04, 0x0D):
 		if (len == Main_settings.cmdq_reporting_interval->len) {
 			Main_settings.cmdq_reporting_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x4F:
-		if (len == Main_settings.s_band_rf_frequency_hz->len) {
-			Main_settings.s_band_rf_frequency_hz->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x50:
+	case MAKE_KEY(0x04, 0x0E):
 		if (len <= Main_settings.cmdq_report_zero_messages_to_be_sent->len) {
 			Main_settings.cmdq_report_zero_messages_to_be_sent->def_val =
 				bytes_to_uint8_t(data);
@@ -1714,78 +1375,220 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x52:
-		if (len == Main_settings.ublox_interval2_start->len) {
-			Main_settings.ublox_interval2_start->def_val = bytes_to_uint8_t(data);
+	case MAKE_KEY(0x04, 0x0F):
+		if (len == Main_settings.ble_scan_manufacturer_id->len) {
+			Main_settings.ble_scan_manufacturer_id->def_val = bytes_to_uint16_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x57:
+	case MAKE_KEY(0x05, 0x00):
+		if (len == Main_settings.lr_gps_interval->len) {
+			Main_settings.lr_gps_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x01):
+		if (len <= Main_settings.gnss_assisted_scan->len) {
+			Main_settings.gnss_assisted_scan->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x02):
+		if (len == Main_settings.lr_adr->len) {
+			Main_settings.lr_adr->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x03):
+		if (len == Main_settings.lr_region->len) {
+			Main_settings.lr_region->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x04):
+		if (len <= Main_settings.app_key->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.app_key->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.app_key->len; i++) {
+				Main_settings.app_key->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x05):
+		if (len <= Main_settings.device_eui->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.device_eui->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.device_eui->len; i++) {
+				Main_settings.device_eui->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x06):
+		if (len <= Main_settings.app_eui->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.app_eui->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.app_eui->len; i++) {
+				Main_settings.app_eui->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x07):
+		if (len == Main_settings.s_band_send_interval->len) {
+			Main_settings.s_band_send_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x08):
+		if (len == Main_settings.lr_join_flag->len) {
+			Main_settings.lr_join_flag->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x09):
+		if (len == Main_settings.lr_confirm_flag->len) {
+			Main_settings.lr_confirm_flag->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x0A):
+		if (len == Main_settings.lr_max_confirm_fail->len) {
+			Main_settings.lr_max_confirm_fail->def_val = bytes_to_uint16_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x0B):
+		if (len == Main_settings.lr_messaging_retry_interval->len) {
+			Main_settings.lr_messaging_retry_interval->def_val =
+				bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x0C):
+		if (len == Main_settings.lr_messaging_retry_count->len) {
+			Main_settings.lr_messaging_retry_count->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x0D):
+		if (len == Main_settings.rejoin_interval->len) {
+			Main_settings.rejoin_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x0E):
+		if (len <= Main_settings.lp0_app_key->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.lp0_app_key->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.lp0_app_key->len; i++) {
+				Main_settings.lp0_app_key->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x0F):
+		if (len <= Main_settings.lp0_network_key->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.lp0_network_key->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.lp0_network_key->len; i++) {
+				Main_settings.lp0_network_key->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x10):
+		if (len <= Main_settings.lp0_dev_addr->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.lp0_dev_addr->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.lp0_dev_addr->len; i++) {
+				Main_settings.lp0_dev_addr->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x11):
+		if (len == Main_settings.s_band_rf_frequency_hz->len) {
+			Main_settings.s_band_rf_frequency_hz->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x12):
 		if (len == Main_settings.lr_adr_profile->len) {
 			Main_settings.lr_adr_profile->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x5F:
-		if (len == Main_settings.ublox_min_satellites->len) {
-			Main_settings.ublox_min_satellites->def_val = bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x60:
-		if (len <= Main_settings.external_switch_detection_gpio_pin_power_enabled->len) {
-			Main_settings.external_switch_detection_gpio_pin_power_enabled->def_val =
-				bytes_to_uint8_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x61:
+	case MAKE_KEY(0x05, 0x13):
 		if (len <= Main_settings.vhf_enabled->len) {
 			Main_settings.vhf_enabled->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x62:
+	case MAKE_KEY(0x05, 0x14):
 		if (len == Main_settings.vhf_interval1->len) {
 			Main_settings.vhf_interval1->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x63:
+	case MAKE_KEY(0x05, 0x15):
 		if (len == Main_settings.vhf_interval2->len) {
 			Main_settings.vhf_interval2->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x64:
+	case MAKE_KEY(0x05, 0x16):
 		if (len == Main_settings.vhf_interval1_start->len) {
 			Main_settings.vhf_interval1_start->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x65:
+	case MAKE_KEY(0x05, 0x17):
 		if (len == Main_settings.vhf_interval2_start->len) {
 			Main_settings.vhf_interval2_start->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x66:
+	case MAKE_KEY(0x05, 0x18):
 		if (len <= Main_settings.vhf_multiple_intervals->len) {
 			Main_settings.vhf_multiple_intervals->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x67:
+	case MAKE_KEY(0x05, 0x19):
 		if (len == Main_settings.vhf_num_of_packets_per_burst->len) {
 			Main_settings.vhf_num_of_packets_per_burst->def_val =
 				bytes_to_uint8_t(data);
@@ -1793,7 +1596,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x68:
+	case MAKE_KEY(0x05, 0x1A):
 		if (len == Main_settings.vhf_time_between_packets_ms->len) {
 			Main_settings.vhf_time_between_packets_ms->def_val =
 				bytes_to_uint16_t(data);
@@ -1801,21 +1604,21 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x69:
+	case MAKE_KEY(0x05, 0x1B):
 		if (len <= Main_settings.vhf_external_path->len) {
 			Main_settings.vhf_external_path->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x6A:
+	case MAKE_KEY(0x05, 0x1C):
 		if (len == Main_settings.vhf_tx_frequency_khz->len) {
 			Main_settings.vhf_tx_frequency_khz->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x6B:
+	case MAKE_KEY(0x05, 0x1D):
 		if (len == Main_settings.vhf_single_pulse_duration_ms->len) {
 			Main_settings.vhf_single_pulse_duration_ms->def_val =
 				bytes_to_uint16_t(data);
@@ -1823,21 +1626,214 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x6C:
+	case MAKE_KEY(0x05, 0x1E):
 		if (len == Main_settings.s_band_send_mode->len) {
 			Main_settings.s_band_send_mode->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x6D:
-		if (len <= Main_settings.fence_led_blink->len) {
-			Main_settings.fence_led_blink->def_val = bytes_to_uint8_t(data);
+	case MAKE_KEY(0x05, 0x1F):
+		if (len == Main_settings.lp0_send_flag->len) {
+			Main_settings.lp0_send_flag->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x6E:
+	case MAKE_KEY(0x05, 0x20):
+		if (len == Main_settings.lp0_tx_frequency_hz->len) {
+			Main_settings.lp0_tx_frequency_hz->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x21):
+		if (len == Main_settings.lp0_rx_frequency_hz->len) {
+			Main_settings.lp0_rx_frequency_hz->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x22):
+		if (len <= Main_settings.lp0_communication_params->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.lp0_communication_params->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.lp0_communication_params->len; i++) {
+				Main_settings.lp0_communication_params->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x05, 0x23):
+		if (len <= Main_settings.lp0_node_params->len) {
+			for (int i = 0; i < len; i++) {
+				Main_settings.lp0_node_params->def_val[i] = data[i];
+			}
+			for (int i = len; i < Main_settings.lp0_node_params->len; i++) {
+				Main_settings.lp0_node_params->def_val[i] = '\0';
+			}
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x00):
+		if (len == Main_settings.ublox_send_interval->len) {
+			Main_settings.ublox_send_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x01):
+		if (len == Main_settings.gps_init_lon->len) {
+			Main_settings.gps_init_lon->def_val = bytes_to_int32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x02):
+		if (len == Main_settings.gps_init_lat->len) {
+			Main_settings.gps_init_lat->def_val = bytes_to_int32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x03):
+		if (len == Main_settings.gps_resend_interval->len) {
+			Main_settings.gps_resend_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x04):
+		if (len == Main_settings.horizontal_accuracy->len) {
+			Main_settings.horizontal_accuracy->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x05):
+		if (len == Main_settings.cold_fix_retry->len) {
+			Main_settings.cold_fix_retry->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x06):
+		if (len == Main_settings.hot_fix_retry->len) {
+			Main_settings.hot_fix_retry->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x07):
+		if (len == Main_settings.cold_fix_timeout->len) {
+			Main_settings.cold_fix_timeout->def_val = bytes_to_uint16_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x08):
+		if (len == Main_settings.hot_fix_timeout->len) {
+			Main_settings.hot_fix_timeout->def_val = bytes_to_uint16_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x09):
+		if (len == Main_settings.gps_backoff_factor->len) {
+			Main_settings.gps_backoff_factor->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x0A):
+		if (len == Main_settings.ublox_send_interval_2->len) {
+			Main_settings.ublox_send_interval_2->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x0B):
+		if (len == Main_settings.ublox_interval1_start->len) {
+			Main_settings.ublox_interval1_start->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x0C):
+		if (len == Main_settings.ublox_min_fix_time->len) {
+			Main_settings.ublox_min_fix_time->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x0D):
+		if (len <= Main_settings.ublox_multiple_intervals->len) {
+			Main_settings.ublox_multiple_intervals->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x0E):
+		if (len <= Main_settings.ublox_active_tracking->len) {
+			Main_settings.ublox_active_tracking->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x0F):
+		if (len == Main_settings.gps_triggered_interval->len) {
+			Main_settings.gps_triggered_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x10):
+		if (len == Main_settings.gps_skipped_triggered_interval->len) {
+			Main_settings.gps_skipped_triggered_interval->def_val =
+				bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x11):
+		if (len == Main_settings.ublox_leave_on->len) {
+			Main_settings.ublox_leave_on->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x12):
+		if (len == Main_settings.gnss_constellation_to_use->len) {
+			Main_settings.gnss_constellation_to_use->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x13):
+		if (len == Main_settings.ublox_min_satellites_timer->len) {
+			Main_settings.ublox_min_satellites_timer->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x14):
+		if (len == Main_settings.ublox_interval2_start->len) {
+			Main_settings.ublox_interval2_start->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x15):
+		if (len == Main_settings.ublox_min_satellites->len) {
+			Main_settings.ublox_min_satellites->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x06, 0x16):
 		if (len ==
 		    Main_settings.gps_motion_triggered_min_num_of_triggers_per_interval->len) {
 			Main_settings.gps_motion_triggered_min_num_of_triggers_per_interval
@@ -1846,43 +1842,50 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x72:
-		if (len == Main_settings.ble_scan_manufacturer_id->len) {
-			Main_settings.ble_scan_manufacturer_id->def_val = bytes_to_uint16_t(data);
+	case MAKE_KEY(0x06, 0x17):
+		if (len <= Main_settings.enable_motion_trig_gps->len) {
+			Main_settings.enable_motion_trig_gps->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x73:
-		if (len <= Main_settings.accel_movement_data_fifo_enabled->len) {
-			Main_settings.accel_movement_data_fifo_enabled->def_val =
-				bytes_to_uint8_t(data);
+	case MAKE_KEY(0x06, 0x18):
+		if (len == Main_settings.ublox_cold_fix_hour_interval->len) {
+			Main_settings.ublox_cold_fix_hour_interval->def_val =
+				bytes_to_uint16_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x74:
-		if (len == Main_settings.accel_odr_hz->len) {
-			Main_settings.accel_odr_hz->def_val = bytes_to_uint16_t(data);
+	case MAKE_KEY(0x07, 0x00):
+		if (len == Main_settings.satellite_send_interval->len) {
+			Main_settings.satellite_send_interval->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x75:
-		if (len == Main_settings.accel_g_scale->len) {
-			Main_settings.accel_g_scale->def_val = bytes_to_uint8_t(data);
+	case MAKE_KEY(0x07, 0x01):
+		if (len <= Main_settings.satellite_enabled->len) {
+			Main_settings.satellite_enabled->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x76:
+	case MAKE_KEY(0x07, 0x02):
+		if (len == Main_settings.satellite_retry->len) {
+			Main_settings.satellite_retry->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x07, 0x03):
 		if (len == Main_settings.satellite_send_interval2->len) {
 			Main_settings.satellite_send_interval2->def_val = bytes_to_uint32_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x77:
+	case MAKE_KEY(0x07, 0x04):
 		if (len == Main_settings.satellite_send_interval2_start->len) {
 			Main_settings.satellite_send_interval2_start->def_val =
 				bytes_to_uint8_t(data);
@@ -1890,7 +1893,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x78:
+	case MAKE_KEY(0x07, 0x05):
 		if (len <= Main_settings.satellite_multiple_intervals->len) {
 			Main_settings.satellite_multiple_intervals->def_val =
 				bytes_to_uint8_t(data);
@@ -1898,28 +1901,100 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x79:
+	case MAKE_KEY(0x07, 0x06):
 		if (len == Main_settings.satellite_interval1_start->len) {
 			Main_settings.satellite_interval1_start->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x7A:
+	case MAKE_KEY(0x08, 0x00):
+		if (len == Main_settings.motion_ths->len) {
+			Main_settings.motion_ths->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x01):
+		if (len <= Main_settings.fence_enabled->len) {
+			Main_settings.fence_enabled->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x02):
+		if (len == Main_settings.fence_interval->len) {
+			Main_settings.fence_interval->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x03):
+		if (len == Main_settings.fence_sampling_length->len) {
+			Main_settings.fence_sampling_length->def_val = bytes_to_uint16_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x04):
+		if (len == Main_settings.fence_mv_scaling_factor->len) {
+			Main_settings.fence_mv_scaling_factor->def_val = bytes_to_uint32_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x05):
+		if (len <= Main_settings.external_switch_detection_gpio_pin_power_enabled->len) {
+			Main_settings.external_switch_detection_gpio_pin_power_enabled->def_val =
+				bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x06):
+		if (len <= Main_settings.fence_led_blink->len) {
+			Main_settings.fence_led_blink->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x07):
+		if (len <= Main_settings.accel_movement_data_fifo_enabled->len) {
+			Main_settings.accel_movement_data_fifo_enabled->def_val =
+				bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x08):
+		if (len == Main_settings.accel_odr_hz->len) {
+			Main_settings.accel_odr_hz->def_val = bytes_to_uint16_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x09):
+		if (len == Main_settings.accel_g_scale->len) {
+			Main_settings.accel_g_scale->def_val = bytes_to_uint8_t(data);
+		} else {
+			return -1;
+		}
+		break;
+	case MAKE_KEY(0x08, 0x0A):
 		if (len <= Main_settings.outdoor_detection_enabled->len) {
 			Main_settings.outdoor_detection_enabled->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x7B:
+	case MAKE_KEY(0x08, 0x0B):
 		if (len == Main_settings.outdoor_detection_tau->len) {
 			Main_settings.outdoor_detection_tau->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x7C:
+	case MAKE_KEY(0x08, 0x0C):
 		if (len <= Main_settings.outdoor_detection_parameters->len) {
 			for (int i = 0; i < len; i++) {
 				Main_settings.outdoor_detection_parameters->def_val[i] = data[i];
@@ -1932,15 +2007,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x7D:
-		if (len == Main_settings.ublox_cold_fix_hour_interval->len) {
-			Main_settings.ublox_cold_fix_hour_interval->def_val =
-				bytes_to_uint16_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x7E:
+	case MAKE_KEY(0x08, 0x0E):
 		if (len <= Main_settings.external_switch_detection_enabled->len) {
 			Main_settings.external_switch_detection_enabled->def_val =
 				bytes_to_uint8_t(data);
@@ -1948,7 +2015,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x7F:
+	case MAKE_KEY(0x08, 0x0F):
 		if (len == Main_settings.external_switch_detection_trigger_type->len) {
 			Main_settings.external_switch_detection_trigger_type->def_val =
 				bytes_to_uint8_t(data);
@@ -1956,7 +2023,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x80:
+	case MAKE_KEY(0x08, 0x10):
 		if (len == Main_settings.external_switch_detection_trigger_debounce_ms->len) {
 			Main_settings.external_switch_detection_trigger_debounce_ms->def_val =
 				bytes_to_uint16_t(data);
@@ -1964,7 +2031,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x81:
+	case MAKE_KEY(0x08, 0x11):
 		if (len == Main_settings.external_switch_detection_reporting_interval->len) {
 			Main_settings.external_switch_detection_reporting_interval->def_val =
 				bytes_to_uint32_t(data);
@@ -1972,7 +2039,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x82:
+	case MAKE_KEY(0x08, 0x12):
 		if (len <= Main_settings.external_switch_send_inactivity_report->len) {
 			Main_settings.external_switch_send_inactivity_report->def_val =
 				bytes_to_uint8_t(data);
@@ -1980,7 +2047,7 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x83:
+	case MAKE_KEY(0x08, 0x13):
 		if (len == Main_settings.external_switch_minimal_report_duration_ms->len) {
 			Main_settings.external_switch_minimal_report_duration_ms->def_val =
 				bytes_to_uint16_t(data);
@@ -1988,14 +2055,14 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x84:
+	case MAKE_KEY(0x08, 0x14):
 		if (len == Main_settings.external_switch_input_pull->len) {
 			Main_settings.external_switch_input_pull->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x85:
+	case MAKE_KEY(0x08, 0x15):
 		if (len <= Main_settings.external_switch_counter_enabled->len) {
 			Main_settings.external_switch_counter_enabled->def_val =
 				bytes_to_uint8_t(data);
@@ -2003,61 +2070,16 @@ int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len)
 			return -1;
 		}
 		break;
-	case 0x86:
+	case MAKE_KEY(0x08, 0x16):
 		if (len <= Main_settings.air_quality_enabled->len) {
 			Main_settings.air_quality_enabled->def_val = bytes_to_uint8_t(data);
 		} else {
 			return -1;
 		}
 		break;
-	case 0x87:
+	case MAKE_KEY(0x08, 0x17):
 		if (len == Main_settings.air_quality_interval->len) {
 			Main_settings.air_quality_interval->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x88:
-		if (len == Main_settings.lp0_send_flag->len) {
-			Main_settings.lp0_send_flag->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x89:
-		if (len == Main_settings.lp0_tx_frequency_hz->len) {
-			Main_settings.lp0_tx_frequency_hz->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x8A:
-		if (len == Main_settings.lp0_rx_frequency_hz->len) {
-			Main_settings.lp0_rx_frequency_hz->def_val = bytes_to_uint32_t(data);
-		} else {
-			return -1;
-		}
-		break;
-	case 0x8B:
-		if (len <= Main_settings.lp0_communication_params->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.lp0_communication_params->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.lp0_communication_params->len; i++) {
-				Main_settings.lp0_communication_params->def_val[i] = '\0';
-			}
-		} else {
-			return -1;
-		}
-		break;
-	case 0x8C:
-		if (len <= Main_settings.lp0_node_params->len) {
-			for (int i = 0; i < len; i++) {
-				Main_settings.lp0_node_params->def_val[i] = data[i];
-			}
-			for (int i = len; i < Main_settings.lp0_node_params->len; i++) {
-				Main_settings.lp0_node_params->def_val[i] = '\0';
-			}
 		} else {
 			return -1;
 		}

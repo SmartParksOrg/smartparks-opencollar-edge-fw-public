@@ -20,13 +20,14 @@ Periodic sending of flash status message is governed by `flash_status_interval` 
 
 ```json
 "flash_status_interval": {
-            "id": "0x43",
-            "default": 86400,
-            "min": 0,
-            "max": 604800,
-            "length": 4,
-            "conversion": "uint32"
-        }
+    "id": "0x0B",
+    "default": 0,
+    "min": 0,
+    "max": 604800,
+    "length": 4,
+    "conversion": "uint32",
+    "family": "0x02"
+}
 ```
 
 that controls number of seconds between sends. If set to 0, message will not be send/stored. By
@@ -38,9 +39,9 @@ LoRaWAN, if send via BT, status message will be send via BT.
 
 ```json
 "cmd_get_flash_status": {
-            "id": "0xB3",
-            "length": 0,
-            "conversion": "uint8",
-            "value": 0
-        }
+    "id": "0xB3",
+    "length": 0,
+    "conversion": "uint8",
+    "value": 0
+}
 ```

@@ -280,9 +280,9 @@ void gps_ublox_reset_sat_data(void)
  * @brief Perform hard reset of Ublox module.
  *
  */
-void gps_ublox_reset(void)
+int gps_ublox_reset(void)
 {
-	myGPS.hardReset();
+	return myGPS.hardReset() ? 0 : -EIO;
 }
 
 void gps_ublox_print_position_data(struct gps_ublox_position_data *position)

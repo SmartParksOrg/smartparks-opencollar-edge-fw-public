@@ -3,6 +3,10 @@
 
 #include <zephyr/kernel.h>
 
+/* Permanently reserved for settings written by firmware before v7.4.0. Never reuse this family. */
+#define SETTINGS_FAMILY_LEGACY 0x00
+
+/* Protected storage IDs. These IDs MUST NOT BE USED in the settings.json file (reserved_special) */
 #define STORAGE_unix_time          0x0100
 #define STORAGE_latitude           0x0101
 #define STORAGE_longitude          0x0102
@@ -18,11 +22,15 @@
 #define STORAGE_lorawan_ctx_id3    0x010C
 #define STORAGE_lorawan_ctx_id4    0x010D
 #define STORAGE_lorawan_ctx_id5    0x010E
+#define STORAGE_lorawan_joined_cfg 0x010F
+
+#define MAKE_SETTING_KEY(family, id) ((uint16_t)(((family) << 8) | (id)))
 
 int nvs_storage_init(void);
 int nvs_storage_clear(void);
 int nvs_storage_write(uint16_t id, const void *data, size_t len);
 int nvs_storage_read(uint16_t id, void *data, size_t len);
 int nvs_storage_delete(uint16_t id);
+struct nvs_fs *nvs_get_fs(void);
 
 #endif // NVS_STORAGE_H__

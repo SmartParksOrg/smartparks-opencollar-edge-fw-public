@@ -21,12 +21,20 @@ int gps_init(void);
 /**
  * @brief Reset GPS module
  *
- * Turn off VBCK pin. Turn on power and send GPS Ublox reset command. Turn power off and reset all
- * variables.
+ * Clear backup power, send the Ublox reset command, verify communication after restart, turn off
+ * main power and reset the fix state.
  *
- * @return int - 0
+ * @return int 0 on success, negative error code when reset or reinitialization fails
  */
 int gps_reset(void);
+
+/**
+ * @brief Restart the GPS fix acquisition state machine.
+ *
+ * Clear the hot/cold fix state, retry counters and fix error without resetting the Ublox module.
+ * This is intended for explicitly requested fixes after the automatic retry limit was reached.
+ */
+void gps_reset_fix_state(void);
 
 /*!
  * @brief Stop GPS.

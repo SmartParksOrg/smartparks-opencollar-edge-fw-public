@@ -97,7 +97,7 @@ static int prv_set_sleep_mode(void)
 		}
 	}
 #elif CONFIG_BOARD_FREEEDGE_NRF52840
-	/* Select ANT2 path (2.4GHz) */
+	/* Select ANT2 path (2.0GHz) */
 	err = gpio_pin_set_dt(&ant_sel_gpio, 0);
 	if (err) {
 		LOG_ERR("Failed to configure ctx gpio");
@@ -191,6 +191,17 @@ static int prv_set_rx_lna_mode(void)
 			return err;
 		}
 	}
+#elif CONFIG_BOARD_FREEEDGE_NRF52840
+	if (strcmp(CONFIG_BOARD_REVISION, "1.3.0") == 0 ||
+	    strcmp(CONFIG_BOARD_REVISION, "1.6.0") == 0 ||
+	    strcmp(CONFIG_BOARD_REVISION, "1.7.0") == 0) {
+		/* Select ANT2 path (2.4GHz) */
+		err = gpio_pin_set_dt(&ant_sel_gpio, 1);
+		if (err) {
+			LOG_ERR("Failed to configure ctx gpio");
+			return err;
+		}
+	}
 #elif CONFIG_BOARD_RANGEREDGE_NRF52840 || CONFIG_BOARD_RANGEREDGE_AIRQ_NRF52840
 	if (strcmp(CONFIG_BOARD_REVISION, "1.8.0") == 0) {
 		/* Select ANT2 path (2.4GHz) */
@@ -249,7 +260,8 @@ static int prv_set_tx_mode(void)
 	}
 #elif CONFIG_BOARD_FREEEDGE_NRF52840
 	if (strcmp(CONFIG_BOARD_REVISION, "1.3.0") == 0 ||
-	    strcmp(CONFIG_BOARD_REVISION, "1.6.0") == 0) {
+	    strcmp(CONFIG_BOARD_REVISION, "1.6.0") == 0 ||
+	    strcmp(CONFIG_BOARD_REVISION, "1.7.0") == 0) {
 		/* Select ANT2 path (2.4GHz) */
 		err = gpio_pin_set_dt(&ant_sel_gpio, 1);
 		if (err) {

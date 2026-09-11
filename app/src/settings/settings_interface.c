@@ -8,6 +8,7 @@
  */
 
 #include "lp0.h"
+#include "settings_transfer_helper.h"
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
@@ -23,6 +24,7 @@
 #include "generated_settings.h"
 #include "global_time.h"
 #include "led.h"
+#include "lorawan.h"
 #include "nvs_storage.h"
 #include "status.h"
 #include "thread_com.h"
@@ -114,16 +116,16 @@ static void prv_reset_reference_position(void)
  *
  * @retval  Error message, return 0 if ok.
  */
-static int prv_update_from_nvs(uint8_t id, uint8_t len)
+static int prv_update_from_nvs(uint8_t family, uint8_t id, uint8_t len)
 {
 	// Prepare storage buffer
 	uint8_t stored_data[len];
 	// Try to read data - if successful, overwrite settings
-	int res = nvs_storage_read((uint16_t)id, stored_data, len);
+	int res = nvs_storage_read(MAKE_SETTING_KEY(family, id), stored_data, len);
 	// Got predicted number of bytes
 	if (res == len) {
 		// Write to storage setting
-		set_setting_value_by_id(id, stored_data, len);
+		set_setting_value_by_id(family, id, stored_data, len);
 		LOG_DBG("Setting with id: %x of len: %d, updated from NVS storage with data of "
 			"len: %d!",
 			id, len, res);
@@ -153,7 +155,8 @@ static int prv_update_all_from_nvs(void)
 	LOG_INF("*   Update settings from NVS   *");
 	// Loop over settings ID list
 	for (uint8_t i = 0; i < Main_settings.n_settings; i++) {
-		prv_update_from_nvs(Main_settings.settings_id[i], Main_settings.settings_length[i]);
+		prv_update_from_nvs(Main_settings.settings_family[i], Main_settings.settings_id[i],
+				    Main_settings.settings_length[i]);
 	}
 	LOG_INF("*   Loading settings from NVS done   *\n");
 	return 0;
@@ -162,13 +165,14 @@ static int prv_update_all_from_nvs(void)
 /*!
  * @brief Clear individual setting by ID from NVS.
  *
- * @param[in] uint8_t id          Unique setting ID.
+ * @param[in] uint8_t family        Setting family.
+ * @param[in] uint8_t id            Unique setting ID.
  *
  * @retval  Error message, return 0 if ok.
  */
-static int prv_clear_from_nvs(uint8_t id)
+static int prv_clear_from_nvs(uint8_t family, uint8_t id)
 {
-	return nvs_storage_delete(id);
+	return nvs_storage_delete(MAKE_SETTING_KEY(family, id));
 }
 
 /*!
@@ -182,10 +186,13 @@ static int prv_clear_all_from_nvs(void)
 	// Loop over settings ID list
 	int err = 0;
 	for (uint8_t i = 0; i < Main_settings.n_settings; i++) {
-		int tmp_err = prv_clear_from_nvs(Main_settings.settings_id[i]);
+		int tmp_err = prv_clear_from_nvs(Main_settings.settings_family[i],
+						 Main_settings.settings_id[i]);
 		if (tmp_err) {
-			LOG_ERR("Failed to clear setting with ID: %d, got error: %d",
-				Main_settings.settings_id[i], tmp_err);
+			LOG_ERR("Failed to clear setting from family: %d with ID: %d, got error: "
+				"%d",
+				Main_settings.settings_family[i], Main_settings.settings_id[i],
+				tmp_err);
 			err = tmp_err;
 		}
 	}
@@ -206,12 +213,15 @@ static int prv_clear_all_from_nvs(void)
  * @retval  Error message, return 0 if ok.
  */
 static int prv_execute_new_setting(mb_msg_dest *rsp_dest, mb_msg_action *rsp_action,
-				   uint8_t *rsp_message, uint8_t id)
+				   uint8_t *rsp_message, uint8_t family, uint8_t id)
 {
 	// Check if setting id is in the structure
-	if (check_setting_id(id)) {
-		if (id == Main_settings.device_name->id || id == Main_settings.ble_adv->id ||
-		    id == Main_settings.ble_advertisement_interval->id) {
+	if (check_setting_id(family, id)) {
+		if ((id == Main_settings.device_name->id &&
+		     family == Main_settings.device_name->family) ||
+		    (id == Main_settings.ble_adv->id && family == Main_settings.ble_adv->family) ||
+		    (id == Main_settings.ble_advertisement_interval->id &&
+		     family == Main_settings.ble_advertisement_interval->family)) {
 			LOG_INF("Notify BT module, to update settings!");
 			*rsp_dest = MB_MSG_BT;
 			*rsp_action = MB_MSG_EXECUTE;
@@ -219,11 +229,13 @@ static int prv_execute_new_setting(mb_msg_dest *rsp_dest, mb_msg_action *rsp_act
 			rsp_message[1] = 0;
 			int rsp_len = 2;
 			return rsp_len;
-		} else if (id == Main_settings.led_enabled->id) {
+		} else if (id == Main_settings.led_enabled->id &&
+			   family == Main_settings.led_enabled->family) {
 			LOG_INF("Change led status!");
 			led_change_status(Main_settings.led_enabled->def_val);
 			return 0;
-		} else if (id == Main_settings.satellite_enabled->id) {
+		} else if (id == Main_settings.satellite_enabled->id &&
+			   family == Main_settings.satellite_enabled->family) {
 			LOG_INF("Change satellite module status!");
 			*rsp_dest = MB_MSG_SAT;
 			*rsp_action = MB_MSG_EXECUTE;
@@ -233,14 +245,15 @@ static int prv_execute_new_setting(mb_msg_dest *rsp_dest, mb_msg_action *rsp_act
 			return rsp_len;
 		}
 #ifdef CONFIG_FENCE_PORT
-		else if (id == Main_settings.fence_enabled->id) {
+		else if (id == Main_settings.fence_enabled->id &&
+			 family == Main_settings.fence_enabled->family) {
 			LOG_INF("Change fence status!");
 			sys_features.fence = Main_settings.fence_enabled->def_val;
 			return 0;
 		}
 #endif // CONFIG_FENCE_PORT
 	} else {
-		LOG_ERR("Received message with invalid setting id: %x!", id);
+		LOG_ERR("New setting execution: Received message with invalid setting id: %x!", id);
 	}
 	return 0;
 }
@@ -260,12 +273,15 @@ static int prv_cmd_send_all_val(uint8_t *response_message, uint8_t max_len)
 	for (uint8_t i = 0; i < Main_values.n_values; i++) {
 		// Check if we did no exceed max length
 		if (len + Main_values.values_length[i] + 2 < max_len) {
+			response_message[len] = Main_values.values_family[i];
+			len++;
 			response_message[len] = Main_values.values_id[i];
 			len++;
 			response_message[len] = Main_values.values_length[i];
 			len++;
 			uint8_t data[Main_values.values_length[i]];
-			if (get_value_by_id(Main_values.values_id[i], data)) {
+			if (get_value_by_id(Main_values.values_family[i], Main_values.values_id[i],
+					    data)) {
 				memcpy(response_message + len, data, Main_values.values_length[i]);
 			}
 			len += Main_values.values_length[i];
@@ -285,20 +301,22 @@ static int prv_cmd_send_all_val(uint8_t *response_message, uint8_t max_len)
  *
  * @retval  Error message, return length if OK.
  */
-static int prv_cmd_send_single_val(uint8_t id, uint8_t *response_message, uint8_t max_len)
+static int prv_cmd_send_single_val(uint8_t family, uint8_t id, uint8_t *response_message,
+				   uint8_t max_len)
 {
 	// Check if value is present in Main_values structure
-	if (check_value_id(id)) {
+	if (check_value_id(family, id)) {
 		// Create message to send via LoRa
-		uint8_t len = get_value_len(id);
-		if (len > 0 && len < max_len - 2) {
-			response_message[0] = id;
-			response_message[1] = len;
+		uint8_t len = get_value_len(family, id);
+		if (len > 0 && len < max_len - 3) {
+			response_message[0] = family;
+			response_message[1] = id;
+			response_message[2] = len;
 			uint8_t data[len];
-			if (get_value_by_id(id, data)) {
-				memcpy(response_message + 2, data, len);
+			if (get_value_by_id(family, id, data)) {
+				memcpy(response_message + 3, data, len);
 				LOG_INF("Send value: %d", bytes_to_int32_t(data));
-				return len + 2;
+				return len + 3;
 			}
 		}
 	} else {
@@ -311,25 +329,28 @@ static int prv_cmd_send_single_val(uint8_t id, uint8_t *response_message, uint8_
 /*!
  * @brief Return single setting value.
  *
- * @param[in] uint8_t id                    Setting id.
- * @param[in] uint8_t *response_message      Pointer to response Message.
- * @param[in] uint8_t max_len               Max message len.
+ * @param[in] uint8_t family                 	Setting family.
+ * @param[in] uint8_t id               		Setting id.
+ * @param[in] uint8_t *response_message      	Pointer to response Message.
+ * @param[in] uint8_t max_len               	Max message len.
  *
  * @retval  Error message, return length if OK.
  */
-static int prv_cmd_send_single_setting(uint8_t id, uint8_t *response_message, uint8_t max_len)
+static int prv_cmd_send_single_setting(uint8_t family, uint8_t id, uint8_t *response_message,
+				       uint8_t max_len)
 {
 	// Check if value is present in Main_values structure
-	if (check_setting_id(id)) {
+	if (check_setting_id(family, id)) {
 		// Create message to send via LoRa
-		uint8_t len = get_setting_len(id);
-		if (len > 0 && len < max_len - 2) {
-			response_message[0] = id;
-			response_message[1] = len;
+		uint8_t len = get_setting_len(family, id);
+		if (len > 0 && len < max_len - 3) {
+			response_message[0] = family;
+			response_message[1] = id;
+			response_message[2] = len;
 			uint8_t data[len];
-			if (get_setting_by_id(id, data)) {
-				memcpy(response_message + 2, data, len);
-				return len + 2;
+			if (get_setting_by_id(family, id, data)) {
+				memcpy(response_message + 3, data, len);
+				return len + 3;
 			}
 		}
 	} else {
@@ -352,13 +373,16 @@ static int prv_cmd_send_all_settings(uint8_t *response_message, uint8_t max_len)
 	int len = 0; // response message length
 	for (uint8_t i = prv_sent_settings_counter; i < Main_settings.n_settings; i++) {
 		// Check if we did no exceed max length
-		if (len + Main_settings.settings_length[i] + 2 < max_len) {
+		if (len + Main_settings.settings_length[i] + 3 < max_len) {
+			response_message[len] = Main_settings.settings_family[i];
+			len++;
 			response_message[len] = Main_settings.settings_id[i];
 			len++;
 			response_message[len] = Main_settings.settings_length[i];
 			len++;
 			uint8_t data[Main_settings.settings_length[i]];
-			if (get_setting_by_id(Main_settings.settings_id[i], data)) {
+			if (get_setting_by_id(Main_settings.settings_family[i],
+					      Main_settings.settings_id[i], data)) {
 				memcpy(response_message + len, data,
 				       Main_settings.settings_length[i]);
 			}
@@ -513,10 +537,11 @@ static int prv_execute_command_message(uint8_t *port, mb_msg_dest *rsp_dest,
 	// Send actions - set rsp action to send and compose rsp. If needed, change destination.
 	case CMD_SEND_SINGLE_VAL: {
 		LOG_INF("Send single value.");
-		if (len == 1) {
+		if (len == 2) {
 			*port = PORT_VALUES; // Set port to value port
 			*rsp_action = MB_MSG_SEND;
-			rsp_len = prv_cmd_send_single_val(data[0], rsp_message, msg_max_rsp_len);
+			rsp_len = prv_cmd_send_single_val(data[0], data[1], rsp_message,
+							  msg_max_rsp_len);
 			if (rsp_len == 0) {
 				rsp_message[0] = id;
 				rsp_len = compose_response_msg(rsp_message, -EIO, port);
@@ -588,7 +613,8 @@ static int prv_execute_command_message(uint8_t *port, mb_msg_dest *rsp_dest,
 		LOG_INF("Send single setting.");
 		*port = PORT_SETTINGS; // Set port to settings port
 		*rsp_action = MB_MSG_SEND;
-		rsp_len = prv_cmd_send_single_setting(data[0], rsp_message, msg_max_rsp_len);
+		rsp_len =
+			prv_cmd_send_single_setting(data[0], data[1], rsp_message, msg_max_rsp_len);
 		if (rsp_len == 0) {
 			rsp_message[0] = id;
 			rsp_len = compose_response_msg(rsp_message, -EIO, port);
@@ -606,7 +632,7 @@ static int prv_execute_command_message(uint8_t *port, mb_msg_dest *rsp_dest,
 		*port = PORT_SETTINGS; // Set port to settings port
 		*rsp_action = MB_MSG_SEND;
 
-		if (prv_sent_settings_counter < Main_settings.n_settings - 1) {
+		if (prv_sent_settings_counter < Main_settings.n_settings) {
 			rsp_len = prv_cmd_send_all_settings(rsp_message, msg_max_rsp_len);
 			if (rsp_len == 0) { /* Error handling */
 				rsp_message[0] = id;
@@ -620,7 +646,7 @@ static int prv_execute_command_message(uint8_t *port, mb_msg_dest *rsp_dest,
 					   sizeof(cmd), msg_max_rsp_len);
 
 			LOG_INF("Sent settings: %d/%d", prv_sent_settings_counter,
-				Main_settings.n_settings - 1);
+				Main_settings.n_settings);
 		} else {
 			/* Send confirmation */
 			int err = 0;
@@ -858,36 +884,52 @@ static int prv_execute_command_message(uint8_t *port, mb_msg_dest *rsp_dest,
  * @retval  Error message, or return response length if ok.
  */
 static int prv_execute_message(uint8_t *port, mb_msg_dest *rsp_dest, mb_msg_action *rsp_action,
-			       uint8_t *rsp_message, uint8_t id, uint8_t len, uint8_t *data,
-			       uint8_t msg_max_rsp_len)
+			       uint8_t *rsp_message, uint8_t family, uint8_t id, uint8_t len,
+			       uint8_t *data, uint8_t msg_max_rsp_len)
 {
 	// Setting message
 	if (*port == PORT_SETTINGS) {
 		// Check if setting id is in the structure
-		if (check_setting_id(id)) {
+		if (check_setting_id(family, id)) {
 			// NVS
 			LOG_INF("Store new setting for id: %d", id);
 			// Check length
-			uint8_t len_expected = get_setting_len(id);
+			uint8_t len_expected = get_setting_len(family, id);
 			if (len > len_expected) {
 				LOG_ERR("Received message with invalid length: %d, should be: %d!",
 					len, len_expected);
 				return 0;
 			}
 			// Validate new data
-			if (!validate_setting(id, data)) {
+			if (!validate_setting(family, id, data)) {
 				LOG_ERR("Received setting with invalid data values");
 				return 0;
 			}
 			// Setting update
-			set_setting_value_by_id(id, data, len);
+			set_setting_value_by_id(family, id, data, len);
 			// NVS update
-			nvs_storage_write((uint16_t)id, data, len_expected);
+			if (nvs_storage_write(MAKE_SETTING_KEY(family, id), data, len_expected)) {
+				LOG_ERR("Failed to persist setting family: %d, ID: %d", family, id);
+			}
+			if ((id == Main_settings.lr_region->id &&
+			     family == Main_settings.lr_region->family) ||
+			    (id == Main_settings.app_key->id &&
+			     family == Main_settings.app_key->family) ||
+			    (id == Main_settings.app_eui->id &&
+			     family == Main_settings.app_eui->family)) {
+				lorawan_set_configuration(Main_settings.app_eui->def_val,
+							  Main_settings.app_key->def_val,
+							  Main_settings.lr_region->def_val,
+							  Main_settings.lr_adr->def_val,
+							  Main_settings.lr_adr_profile->def_val);
+			}
 
 			// For some settings, perform action
-			return prv_execute_new_setting(rsp_dest, rsp_action, rsp_message, id);
+			return prv_execute_new_setting(rsp_dest, rsp_action, rsp_message, family,
+						       id);
 		} else {
-			LOG_ERR("Received message with invalid setting id: %x!", id);
+			LOG_ERR("Execute message: Received message with invalid setting id: %x!",
+				id);
 		}
 		return 0;
 	}
@@ -915,13 +957,23 @@ int init_settings(void)
 	}
 	LOG_INF("NVS initialized");
 
+	/* Check if old settings need to be transferred to new settings structure */
+	int transfer_err = settings_transfer();
+	if (transfer_err == -EALREADY) {
+		LOG_DBG("No legacy settings found, skipping transfer");
+		transfer_err = 0;
+	} else if (transfer_err) {
+		LOG_ERR("Failed to transfer old settings to new settings structure! (err: %d)",
+			transfer_err);
+	}
+
 	/* Init all settings from internal storage */
 	err = prv_update_all_from_nvs();
 
 	/* Update reference position */
 	prv_init_reference_position();
 
-	return err;
+	return err != 0 ? err : transfer_err;
 }
 
 int parse_settings_message(uint8_t *message, uint8_t msg_length, mb_msg_dest msg_origin,
@@ -942,6 +994,8 @@ int parse_settings_message(uint8_t *message, uint8_t msg_length, mb_msg_dest msg
 	mb_msg_action rsp_action = MB_MSG_SEND; // Init response action to send
 	uint8_t rsp_message[MAX_BUF_SIZE];
 
+	uint8_t family = 0; // Setting family, to be set if message is setting message
+
 	while (i < msg_length) {
 		// If all bytes from previous setting are read, read new ID
 		if (!read_id) {
@@ -949,6 +1003,11 @@ int parse_settings_message(uint8_t *message, uint8_t msg_length, mb_msg_dest msg
 			id = message[i];
 			read_id = true;
 			i++;
+			if (msg_port == PORT_SETTINGS) { // Only settings have family byte
+				family = id;
+				id = message[i];
+				i++;
+			}
 		}
 		// If all bytes from previous setting are read, read new length
 		else if (len < 0) {
@@ -960,7 +1019,7 @@ int parse_settings_message(uint8_t *message, uint8_t msg_length, mb_msg_dest msg
 				rsp_port = msg_port;
 				LOG_INF("Execute message!");
 				rsp_len = prv_execute_message(&rsp_port, &rsp_dest, &rsp_action,
-							      rsp_message, id, len, NULL,
+							      rsp_message, family, id, len, NULL,
 							      msg_max_rsp_len);
 				// Send rsp to respective thread
 				if (rsp_len > 0) {
@@ -989,8 +1048,8 @@ int parse_settings_message(uint8_t *message, uint8_t msg_length, mb_msg_dest msg
 				rsp_port = msg_port;
 				LOG_INF("Execute message!");
 				rsp_len = prv_execute_message(&rsp_port, &rsp_dest, &rsp_action,
-							      rsp_message, id, len, new_array,
-							      msg_max_rsp_len);
+							      rsp_message, family, id, len,
+							      new_array, msg_max_rsp_len);
 				// Send to respective thread
 				if (rsp_len > 0) {
 					err = thread_put_message(msg_origin, rsp_dest, rsp_action,

@@ -47,28 +47,28 @@ or in this case:
 to port 3. If using BT app set port number as first value and send it in decimal format:
 
 ```txt
-3 32 4 44 1 0 0
+3 5 7 4 44 1 0 0
 ```
 
 or hex format:
 
 ```txt
-0x03 0x20 0x04 0x2c 0x01 0x00 0x00
+0x03 0x05 0x07 0x04 0x2c 0x01 0x00 0x00
 ```
 
-### lp0_app_key - 0x44
+### lp0_app_key - family: 0x05 id: 0x0E
 
 16 byte array containing AppSKey for correct message encoding.
 
-### lp0_network_key - 0x45
+### lp0_network_key - family: 0x05 id: 0x0F
 
 16 byte array containing NwkSKey for correct message encoding.
 
-### lp0_dev_addr - 0x46
+### lp0_dev_addr - family: 0x05 id: 0x10
 
 4 byte array containing Device address for correct message encoding.
 
-### s_band_rf_frequency_hz - 0x4F
+### s_band_rf_frequency_hz - family: 0x05 id: 0x11
 
 Set the frequency on which s-band LoRa operates. Type `uint32`.
 
@@ -78,7 +78,7 @@ Min: 1980000000,
 Max: 2100000000
 ```
 
-### s_band_send_mode - 0x6C
+### s_band_send_mode - family: 0x05 id: 0x1E
 
 Set the s-band send mode. Available send modes:
 

@@ -23,24 +23,24 @@ Two interface functions are available:
 User can control module performance by changing the following settings. Keep in mind settings will
 have action only if used with HW that supports fence module.
 
-### fence_enabled - 0x3F
+### fence_enabled - family: 0x08 id: 0x01
 
 A boolean value enabling/disabling fence functionality.
 
 One can monitor fence status by observing `byte[15]` of the status message. Bit 3 indicates if fence
 module is enabled or disabled. Refer to message parser for more information.
 
-### fence_interval - 0x40
+### fence_interval - family: 0x08 id: 0x02
 
 An `uint32_t` value determining interval to perform fence measurement in seconds. If set to 0,
 measurement will never happen.
 
-### fence_sampling_length - 0x41
+### fence_sampling_length - family: 0x08 id: 0x03
 
 An `uint16_t` value determining measurement length in seconds. Its minimum value is 1 second and max
 60 s.
 
-### fence_mv_scaling_factor - 0x42
+### fence_mv_scaling_factor - family: 0x08 id: 0x04
 
 An `uint32_t` scaling factor representing scaling value that measured mV value should be multiplied
 with. Set to 10000 (corresponding to 10kV when measuring 1000mV ) by default.

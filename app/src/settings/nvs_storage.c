@@ -54,9 +54,9 @@ int nvs_storage_clear(void)
 	return nvs_clear(&fs);
 }
 
-int nvs_storage_write(uint16_t id, const void *data, size_t len)
+int nvs_storage_write(uint16_t storage_key, const void *data, size_t len)
 {
-	size_t write_len = nvs_write(&fs, id, data, len);
+	size_t write_len = nvs_write(&fs, storage_key, data, len);
 	if (write_len == 0) {
 		LOG_DBG("Data already written!");
 	} else if (write_len != len) {
@@ -67,9 +67,9 @@ int nvs_storage_write(uint16_t id, const void *data, size_t len)
 	return 0;
 }
 
-int nvs_storage_read(uint16_t id, void *data, size_t len)
+int nvs_storage_read(uint16_t storage_key, void *data, size_t len)
 {
-	size_t read_len = nvs_read(&fs, id, data, len);
+	size_t read_len = nvs_read(&fs, storage_key, data, len);
 	if (read_len != len) {
 		LOG_DBG("Got length: %d, should be: %d", read_len, len);
 		return -1;
@@ -77,7 +77,12 @@ int nvs_storage_read(uint16_t id, void *data, size_t len)
 	return len;
 }
 
-int nvs_storage_delete(uint16_t id)
+int nvs_storage_delete(uint16_t storage_key)
 {
-	return nvs_delete(&fs, id);
+	return nvs_delete(&fs, storage_key);
+}
+
+struct nvs_fs *nvs_get_fs(void)
+{
+	return &fs;
 }

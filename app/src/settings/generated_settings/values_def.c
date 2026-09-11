@@ -2,54 +2,62 @@
 #include "values_def.h"
 #include <stdio.h>
 
-value_uint32 reset_reason = {0xD0, 0, 0, 4294967295, 4, UINT32_T};
+#define MAKE_KEY(family, id) (((family) << 8) | (id))
+value_uint32 reset_reason = {0x00, 0, 0, 4294967295, 4, UINT32_T, 0xA0};
 
-value_int32 gps_lon = {0xD1, 156447700, -1800000000, 1800000000, 4, INT32_T};
+value_int32 gps_lon = {0x01, 156447700, -1800000000, 1800000000, 4, INT32_T, 0xA0};
 
-value_int32 gps_lat = {0xD2, 465556280, -900000000, 900000000, 4, INT32_T};
+value_int32 gps_lat = {0x02, 465556280, -900000000, 900000000, 4, INT32_T, 0xA0};
 
-value_int32 gps_alt = {0xD3, 253000, -400000, 8000000, 4, INT32_T};
+value_int32 gps_alt = {0x03, 253000, -400000, 8000000, 4, INT32_T, 0xA0};
 
-value_float lis2_acc_x = {0xD4, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT};
+value_float lis2_acc_x = {0x04, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT, 0xA0};
 
-value_float lis2_acc_y = {0xD5, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT};
+value_float lis2_acc_y = {0x05, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT, 0xA0};
 
-value_float lis2_acc_z = {0xD6, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT};
+value_float lis2_acc_z = {0x06, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT, 0xA0};
 
-value_int32 batt_mV = {0xD7, 2500, 1500, 4500, 4, INT32_T};
+value_int32 batt_mV = {0x07, 2500, 1500, 4500, 4, INT32_T, 0xA0};
 
-value_uint32 ublox_time = {0xD8, 1621861202, 1621861202, 4294967295, 4, UINT32_T};
+value_uint32 ublox_time = {0x08, 1787788800, 1787788800, 4294967295, 4, UINT32_T, 0xA0};
 
-value_uint8 lr_satellites = {0xD9, 0, 0, 255, 1, UINT8_T};
+value_uint8 lr_satellites = {0x09, 0, 0, 255, 1, UINT8_T, 0xA0};
 
-value_float mcu_temp = {0xDA, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT};
+value_float mcu_temp = {0x0A, {0, 0}, {-100, 0}, {100, 0}, 4, FLOAT, 0xA0};
 
-value_int32 charge_mV = {0xDB, 0, 0, 32000, 4, INT32_T};
+value_int32 charge_mV = {0x0B, 0, 0, 32000, 4, INT32_T, 0xA0};
 
-value_uint16 gps_h_acc_est = {0xDC, 0, 0, 65535, 2, UINT16_T};
+value_uint16 gps_h_acc_est = {0x0C, 0, 0, 65535, 2, UINT16_T, 0xA0};
 
-value_uint32 flash_nr_msg = {0xE8, 0, 0, 2147483647, 4, UINT32_T};
+value_uint32 flash_nr_msg = {0x0E, 0, 0, 2147483647, 4, UINT32_T, 0xA0};
 
-value_uint32 last_position_time = {0xE9, 0, 0, 4294967295, 4, UINT32_T};
+value_uint32 last_position_time = {0x0F, 0, 0, 4294967295, 4, UINT32_T, 0xA0};
 
-value_uint32 last_accel_int_time = {0xEA, 0, 0, 4294967295, 4, UINT32_T};
+value_uint32 last_accel_int_time = {0x10, 0, 0, 4294967295, 4, UINT32_T, 0xA0};
 
-value_uint8 n_mes = {0xEB, 0, 0, 5, 1, UINT8_T};
+value_uint8 n_mes = {0x11, 0, 0, 5, 1, UINT8_T, 0xA0};
 
-value_uint16 almanac_age = {0xEC, 0, 0, 65535, 2, UINT16_T};
+value_uint16 almanac_age = {0x12, 0, 0, 65535, 2, UINT16_T, 0xA0};
 
 uint8_t factory_device_name_def[8] = "";
 uint8_t factory_device_name_min[8] = "";
 uint8_t factory_device_name_max[8] = "";
 
-value_byte_array factory_device_name = {
-	0xED,      factory_device_name_def, factory_device_name_min, factory_device_name_max, 8,
-	BYTE_ARRAY};
+value_byte_array factory_device_name = {0x13,
+					factory_device_name_def,
+					factory_device_name_min,
+					factory_device_name_max,
+					8,
+					BYTE_ARRAY,
+					0xA0};
 
-value_uint8 satellite_resend_try = {0xEF, 0, 0, 30, 1, UINT8_T};
+value_uint8 satellite_resend_try = {0x14, 0, 0, 30, 1, UINT8_T, 0xA0};
 
-uint8_t val_id_array[] = {0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9,
-			  0xDA, 0xDB, 0xDC, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEF};
+uint8_t val_id_array[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+			  0x0A, 0x0B, 0x0C, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14};
+uint8_t val_family_array[] = {0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0,
+			      0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0, 0xA0};
+
 uint8_t val_len_array[] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 4, 4, 2, 4, 4, 4, 1, 2, 8, 1};
 
 main_values Main_values = {&reset_reason,
@@ -74,117 +82,118 @@ main_values Main_values = {&reset_reason,
 			   &satellite_resend_try,
 			   20,
 			   val_id_array,
+			   val_family_array,
 			   val_len_array};
 
-void *get_value_struct_by_id(uint8_t id)
+void *get_value_struct_by_id(uint8_t family, uint8_t id)
 {
-	switch (id) {
-	case 0xD0:
+	switch (MAKE_KEY(family, id)) {
+	case MAKE_KEY(0xA0, 0x00):
 		return Main_values.reset_reason;
-	case 0xD1:
+	case MAKE_KEY(0xA0, 0x01):
 		return Main_values.gps_lon;
-	case 0xD2:
+	case MAKE_KEY(0xA0, 0x02):
 		return Main_values.gps_lat;
-	case 0xD3:
+	case MAKE_KEY(0xA0, 0x03):
 		return Main_values.gps_alt;
-	case 0xD4:
+	case MAKE_KEY(0xA0, 0x04):
 		return Main_values.lis2_acc_x;
-	case 0xD5:
+	case MAKE_KEY(0xA0, 0x05):
 		return Main_values.lis2_acc_y;
-	case 0xD6:
+	case MAKE_KEY(0xA0, 0x06):
 		return Main_values.lis2_acc_z;
-	case 0xD7:
+	case MAKE_KEY(0xA0, 0x07):
 		return Main_values.batt_mV;
-	case 0xD8:
+	case MAKE_KEY(0xA0, 0x08):
 		return Main_values.ublox_time;
-	case 0xD9:
+	case MAKE_KEY(0xA0, 0x09):
 		return Main_values.lr_satellites;
-	case 0xDA:
+	case MAKE_KEY(0xA0, 0x0A):
 		return Main_values.mcu_temp;
-	case 0xDB:
+	case MAKE_KEY(0xA0, 0x0B):
 		return Main_values.charge_mV;
-	case 0xDC:
+	case MAKE_KEY(0xA0, 0x0C):
 		return Main_values.gps_h_acc_est;
-	case 0xE8:
+	case MAKE_KEY(0xA0, 0x0E):
 		return Main_values.flash_nr_msg;
-	case 0xE9:
+	case MAKE_KEY(0xA0, 0x0F):
 		return Main_values.last_position_time;
-	case 0xEA:
+	case MAKE_KEY(0xA0, 0x10):
 		return Main_values.last_accel_int_time;
-	case 0xEB:
+	case MAKE_KEY(0xA0, 0x11):
 		return Main_values.n_mes;
-	case 0xEC:
+	case MAKE_KEY(0xA0, 0x12):
 		return Main_values.almanac_age;
-	case 0xED:
+	case MAKE_KEY(0xA0, 0x13):
 		return Main_values.factory_device_name;
-	case 0xEF:
+	case MAKE_KEY(0xA0, 0x14):
 		return Main_values.satellite_resend_try;
 	default:
 		return NULL;
 	}
 }
 
-int get_value_by_id(uint8_t id, uint8_t *bytes)
+int get_value_by_id(uint8_t family, uint8_t id, uint8_t *bytes)
 {
-	switch (id) {
-	case 0xD0:
+	switch (MAKE_KEY(family, id)) {
+	case MAKE_KEY(0xA0, 0x00):
 		uint32_t_to_bytes(bytes, Main_values.reset_reason->def_val);
 		return 4;
-	case 0xD1:
+	case MAKE_KEY(0xA0, 0x01):
 		int32_t_to_bytes(bytes, Main_values.gps_lon->def_val);
 		return 4;
-	case 0xD2:
+	case MAKE_KEY(0xA0, 0x02):
 		int32_t_to_bytes(bytes, Main_values.gps_lat->def_val);
 		return 4;
-	case 0xD3:
+	case MAKE_KEY(0xA0, 0x03):
 		int32_t_to_bytes(bytes, Main_values.gps_alt->def_val);
 		return 4;
-	case 0xD4:
+	case MAKE_KEY(0xA0, 0x04):
 		float_to_bytes(bytes, Main_values.lis2_acc_x->def_val);
 		return 4;
-	case 0xD5:
+	case MAKE_KEY(0xA0, 0x05):
 		float_to_bytes(bytes, Main_values.lis2_acc_y->def_val);
 		return 4;
-	case 0xD6:
+	case MAKE_KEY(0xA0, 0x06):
 		float_to_bytes(bytes, Main_values.lis2_acc_z->def_val);
 		return 4;
-	case 0xD7:
+	case MAKE_KEY(0xA0, 0x07):
 		int32_t_to_bytes(bytes, Main_values.batt_mV->def_val);
 		return 4;
-	case 0xD8:
+	case MAKE_KEY(0xA0, 0x08):
 		uint32_t_to_bytes(bytes, Main_values.ublox_time->def_val);
 		return 4;
-	case 0xD9:
+	case MAKE_KEY(0xA0, 0x09):
 		uint8_t_to_bytes(bytes, Main_values.lr_satellites->def_val);
 		return 1;
-	case 0xDA:
+	case MAKE_KEY(0xA0, 0x0A):
 		float_to_bytes(bytes, Main_values.mcu_temp->def_val);
 		return 4;
-	case 0xDB:
+	case MAKE_KEY(0xA0, 0x0B):
 		int32_t_to_bytes(bytes, Main_values.charge_mV->def_val);
 		return 4;
-	case 0xDC:
+	case MAKE_KEY(0xA0, 0x0C):
 		uint16_t_to_bytes(bytes, Main_values.gps_h_acc_est->def_val);
 		return 2;
-	case 0xE8:
+	case MAKE_KEY(0xA0, 0x0E):
 		uint32_t_to_bytes(bytes, Main_values.flash_nr_msg->def_val);
 		return 4;
-	case 0xE9:
+	case MAKE_KEY(0xA0, 0x0F):
 		uint32_t_to_bytes(bytes, Main_values.last_position_time->def_val);
 		return 4;
-	case 0xEA:
+	case MAKE_KEY(0xA0, 0x10):
 		uint32_t_to_bytes(bytes, Main_values.last_accel_int_time->def_val);
 		return 4;
-	case 0xEB:
+	case MAKE_KEY(0xA0, 0x11):
 		uint8_t_to_bytes(bytes, Main_values.n_mes->def_val);
 		return 1;
-	case 0xEC:
+	case MAKE_KEY(0xA0, 0x12):
 		uint16_t_to_bytes(bytes, Main_values.almanac_age->def_val);
 		return 2;
-	case 0xED:
+	case MAKE_KEY(0xA0, 0x13):
 		byte_array_to_bytes(bytes, Main_values.factory_device_name->def_val, 8);
 		return 8;
-	case 0xEF:
+	case MAKE_KEY(0xA0, 0x14):
 		uint8_t_to_bytes(bytes, Main_values.satellite_resend_try->def_val);
 		return 1;
 	default:

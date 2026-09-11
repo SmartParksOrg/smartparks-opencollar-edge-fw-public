@@ -7,8 +7,8 @@ Ublox GPS module is present on all tracker HW types.
 Tracker tries to obtain GPS fix on defined interval time and send position data via
 LoRaWAN/satellite/store it to flash, based on set flags for specific message.
 
-GPS interval is defined with user setting `ublox_send_interval` with id `0x02` representing
-`uint32_t` interval in seconds.
+GPS interval is defined with user setting `ublox_send_interval` with ublox_send_interval family:
+`0x06` and id: `0x00` representing `uint32_t` interval in seconds.
 
 Two position messages can be produced:
 
@@ -61,14 +61,11 @@ Short message will be sent only if gps fix was successfully obtained.
 User can set sending/storing preferences for both messages in the standard way by setting send via
 LoRaWAN/send via satellite/store to flash settings flags.
 
-In debug mode, governed by setting: "gps_sat_data" with id: 0x0A (turn this on: 0A 01 01 or turn
-this off: 0A 01 00 to port 3) also additional **satellite data message** is send to port 9.
-
 ## Two intervals operation
 
 Two-interval operation is supported. To use 2 intervals functionality, setting:
-`ublox_multiple_intervals` with id: `0x29` must be turned on with command: `29 01 00` send to
-port 3.
+`ublox_multiple_intervals` with family: `0x06` and id: `0x0D` must be turned on with command:
+`06 0D 01 00` send to port 3.
 
 We can divide each day into two intervals: `interval1` and `interval2`. The start of each interval
 is defined by `ublox_interval1_start` and `ublox_interval2_start` respectively. Supported values are
@@ -92,11 +89,13 @@ procedure every 15 minutes. At exactly 17.45, the last 15-minute fix will be mad
 `interval2` at 18:00 a fix will be made at the start and on every hour until the next day at 7.00
 when we switch back to `interval1`.
 
-The start of `interval1` can be changed with the command: `27 01 val_in_hex_format` send on port 3.
+The start of `interval1` can be changed with the command: `06 0B 01 val_in_hex_format` send on
+port 3.
 
 If two-interval operation mode is selected, interval of gps fix can be defined for each interval
-separately. For `interval1` the default setting `ublox_send_interval` with id `0x02` is used. For
-`interval2` the setting `ublox_send_interval_2` with id `0x26` is used.
+separately. For `interval1` the default setting `ublox_send_interval` with family `0x06` and id:
+`0x00` is used. For `interval2` the setting `ublox_send_interval_2` with family `0x06` id `0x0A` is
+used.
 
 ## Cold and hot fix
 
@@ -104,9 +103,9 @@ GPS fix acquisition logic:
 
 1. Upon gps fix acquisition start, the tracker will attempt to obtain a cold fix.
 
-2. Duration of the cold fix is determined with setting `cold_fix_timeout` with id: `0x16`. Default
-   value is 200s. To change its value send the command
-   `[16 02 [uint16 val in hex format, little endian]]` to port 3.
+2. Duration of the cold fix is determined with setting `cold_fix_timeout` with family: `0x06` and
+   id: `0x07`. Default value is 200s. To change its value send the command
+   `[06 07 02 [uint16 val in hex format, little endian]]` to port 3.
 
 3. During the cold fix, after `ublox_min_satellites_timer` (default `30`) seconds, a check is made
    to ensure there is a sufficient amount of satellites detected to continue fix acquisition. The
@@ -114,23 +113,23 @@ GPS fix acquisition logic:
    Setting `ublox_min_satellites` to 0 will disable the feature.
 
 4. If the cold fix is unsuccessful, the tracker will perform a new fix attempt for as many times as
-   defined by setting `cold_fix_retry` with id `0x14`. Default value is 10. To change value send
-   command `[14 01 [val in hex format]]` to port 3. Current attempt number is included in gps
-   message on port 2.
+   defined by setting `cold_fix_retry` with family: `0x06` and id: `0x05`. Default value is 10. To
+   change value send command `[06 05 01 [val in hex format]]` to port 3. Current attempt number is
+   included in gps message on port 2.
 
 5. After a defined number of unsuccessful cold fix attempts, gps module will turn off. To reboot gps
    module send command: `[A6 00]` to port 32. If unsuccessful, reset tracker with command: `[A1 00]`
    to port 32.
 
 6. If a successful cold fix is obtained, the GPS module will stay turned on for a user configurable
-   period of time. This can be changed by setting `ublox_leave_on` with id `0x33` representing time
-   in seconds. Default value is 15s.
+   period of time. This can be changed by setting `ublox_leave_on` with family: `0x06` and id:
+   `0x11` representing time in seconds. Default value is 15s.
 
 7. After a successful cold fix, tracker will attempt hot fix acquisition on the next interval.
 
-8. Duration of hot fix is determined with the setting `hot_fix_timeout` with id `0x17`. Default
-   value is 45s. To change the value send `[17 02 [uint16 val in hex format, little endian]]` to
-   port 3.
+8. Duration of hot fix is determined with the setting `hot_fix_timeout` with family: `0x06` and id:
+   `0x08`. Default value is 45s. To change the value send
+   `[06 08 02 [uint16 val in hex format, little endian]]` to port 3.
 
 9. During the hot fix, after `ublox_min_satellites_timer` (default `30`) seconds, a check is made to
    ensure there is a sufficient amount of satellites detected to continue fix acquisition. The
@@ -138,16 +137,16 @@ GPS fix acquisition logic:
    Setting `ublox_min_satellites` to 0 will disable the feature.
 
 10. If hot fix is unsuccessful, tracker will make new attempts for as many times as defined by the
-    `hot_fix_retry` setting, with id `0x15`. Default value is 3. To change the value send the
-    `[15 01 [val in hex format]]` command to port 3. Current attempt nr. is included in gps message
-    on port 2.
+    `hot_fix_retry` setting, with family: `0x06` and id: `0x06`. Default value is 3. To change the
+    value send the `[06 06 01 [val in hex format]]` command to port 3. Current attempt nr. is
+    included in gps message on port 2.
 
 11. After a defined number of unsuccessful hot fix attempts, tracker will again try with cold fixes.
 
-12. Minimum fix acquisition time is defined with the user setting `ublox_min_fix_time` with id
-    `0x28`, representing time in seconds. Its default value is 5s. Tracker will attempt to acquire
-    position for at least `ublox_min_fix_time` seconds, even is successful fix ws obtained in
-    shorter time.
+12. Minimum fix acquisition time is defined with the user setting `ublox_min_fix_time` with family:
+    `0x06` and id:`0x0C`, representing time in seconds. Its default value is 5s. Tracker will
+    attempt to acquire position for at least `ublox_min_fix_time` seconds, even is successful fix ws
+    obtained in shorter time.
 
 ### Cold fix interval
 
@@ -159,25 +158,27 @@ cold fix. Setting this user setting to 0 will disable this feature.
 
 Back off functionality is available.
 
-Back off factor is defined with setting `gps_backoff_factor` with id `0x25`. Value, divided by 10,
-represents the scaling factor between unsuccessful cold fix attempts. So for factor 1.5, the setting
-must be set to 15, i.e.: `[25 01 0F]` to port 3. To disable the backoff functionality, set value of
-the coefficient to 1 (i.e. setting 10: `[25 01 0A]` command to port 3).
+Back off factor is defined with setting `gps_backoff_factor` with family: `0x06` and id: `0x09`.
+Value, divided by 10, represents the scaling factor between unsuccessful cold fix attempts. So for
+factor 1.5, the setting must be set to 15, i.e.: `[06 09 01 0F]` to port 3. To disable the backoff
+functionality, set value of the coefficient to 1 (i.e. setting 10: `[06 09 01 0A]` command to port
+3).
 
 If two-interval operation is supported backoff will be reset on interval switch.
 
 ## Active tracking
 
 Active tracking mode is supported. To enable active tracking, user setting `ublox_active_tracking`
-with id `0x2B` must me set to true. In this mode GPS module will be turned on all the time.
+with family: `0x06` and id: `0x0E` must me set to true. In this mode GPS module will be turned on
+all the time.
 
 ## Motion triggered GPS
 
 Motion triggered GPS mode is supported. To enable the functionality, the user setting
-`enable_motion_trig_gps` with an id value of `0x2E` must be enabled. Motion threshold is checked
-using the accelerometer sensor, the sensitivity of which can be configured by the `motion_ths`
-setting with an id value of `0x2D`. Default value is set to 6 - refer to lis2dw12 sensor data-sheet
-for an in-depth explanation.
+`enable_motion_trig_gps` with family: `0x06` and an id value of: `0x17` must be enabled. Motion
+threshold is checked using the accelerometer sensor, the sensitivity of which can be configured by
+the `motion_ths` setting with family: `0x08` and an id value of `0x00`. Default value is set to 6 -
+refer to lis2dw12 sensor data-sheet for an in-depth explanation.
 
 The motion triggered GPS fix functionality is split into two modes:
 
@@ -238,16 +239,16 @@ performed.
 
 User can initiate GPS fix outside defined intervals by using commands:
 
-**cmd_get_ublox_fix** with id `0xB8` - standard message will be send (port 2) on communication
+**cmd_get_ublox_fix** with id: `0xB8` - standard message will be send (port 2) on communication
 channel command was received on.
 
-**cmd_get_ublox_satellite_data** with id `0xB8` - a fix will be made and the data of detected ublox
+**cmd_get_ublox_satellite_data** with id: `0xB8` - a fix will be made and the data of detected ublox
 GPS satellites will be sent
 
-To reset GPS module, send the **cmd_reset_gps** command with id `0xA6`.
+To reset GPS module, send the **cmd_reset_gps** command with id: `0xA6`.
 
 ## Resending position message
 
 User can enable periodic resend of the most recent valid position fix, by setting
-`gps_resend_interval` with id `0x0A` that determines interval in seconds. Short GPS position message
-will be sent only to LoRaWAN.
+`gps_resend_interval` with family: `0x06` and id: `0x0A` that determines interval in seconds. Short
+GPS position message will be sent only to LoRaWAN.

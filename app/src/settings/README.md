@@ -5,6 +5,49 @@ at build time from [settings.json](../../../scripts/settings/settings.json) allo
 modification when new HW or tracker is introduced. More on how [auto-generated](generated_settings)
 files are created is [described in settings scripts module](../../../scripts/settings/README.md).
 
+> [!IMPORTANT] The settings structure has changed for firmware versions equal or larger than v7.4.0.
+> From v7.4.0 onward the firmware uses a `family` byte which serves as user setting grouping. The
+> settings format changes slightly from:
+>
+> `Port Id Length Data`
+>
+> to
+>
+> `Port Family Id Length Data`
+>
+> Important note: This change applies to settings and values. Commands, messages and ports (except
+> `port 3 - settings port`) stay the same.
+
+<--! -->
+
+> [!CAUTION] After old settings are transferred they are deleted from the NVS so if the device is
+> downgraded those settings won't be present anymore. Settings that were transferred will persist
+> though as well as any new additions will be transferred upon a new DFU upgrade.
+>
+> Example: The user has a device with firmware which uses old settings, eg. LoRaWAN region (old ID
+> 0x0F), which is set `US915` (value 0x03); After performing a DFU upgrade to firmware >=v7.4.0, the
+> setting will be transferred to 0x0503 and deleted from 0x0F. If the user also has lr_gps_interval
+> (old ID 0x01) set to 60, it will be transferred to 0x0500 and deleted from 0x01.
+>
+> If the user then reverts to the older firmware, the setting won't be present at 0x0F anymore
+> meaning it won't be loaded and the old firmware's compiled default will be used. The same applies
+> to lr_gps_interval at 0x01. However the transferred settings still exist at 0x0503 and 0x0500.
+>
+> If the user changes lr_gps_interval to 45 when using the old firmware and also changes some other
+> setting, eg. lr_adr (old ID 0x0E), which is set to eg. 0x08, then performs the DFU upgrade, both
+> newly saved settings will be transferred. The value 45 at 0x01 will overwrite the previously
+> transferred value 60 at 0x0500, and lr_adr will be transferred to 0x0502. After the new entries
+> are written and verified, the old entries at 0x01 and 0x0E will be deleted.
+>
+> When using the new firmware all existent and transferred settings will load. Meaning the lr_region
+> will still have a value of 0x03, lr_gps_interval will have a value of 45 and lr_adr will have a
+> value of 0x08. The previously transferred lr_region stays unchanged because no new value was saved
+> at its old ID.
+>
+> Settings that already have been transferred will be overwritten by a new transfer respectively.
+> This applies to all non-default settings saved in the old firmware. Any valid entry saved at an
+> old ID will be transferred.
+
 ## User commands instructions
 
 User can change pre-defined settings and send commands to devices from mobile app or via LoRaWAN
@@ -23,7 +66,8 @@ under "settings" cluster. Each setting is of the format:
         "min": 0,
         "max": 1000000,
         "length": 4,
-        "conversion": "uint32"
+        "conversion": "uint32",
+        "family": "0x00"
 }
 ```
 
@@ -45,14 +89,14 @@ To change any setting, a custom command can be send via BT app or using LoRaWAN 
 Send downlink message to port 3 of the format:
 
 ```txt
-id length [data in byte array format]
+family id length [data in byte array format]
 ```
 
 To set the above "settingname" example setting to value 1000, first convert 1000 to byte array:
-`E8 03 00 00` and replace id with `01` and length with `04`:
+`E8 03 00 00` and replace family with `00` id with `01` and length with `04`:
 
 ```txt
-01 04 E8 03 00 00
+00 01 04 E8 03 00 00
 ```
 
 > [!IMPORTANT] All integer settings must be encoded in little-endian. Byte arrays are specified from
@@ -72,23 +116,26 @@ Lets set the outdoor detection parameters to the below specified values:
 
 ```json
 "outdoor_detection_parameters": {
-    "id": "0x7C",
-    "default": "{0xCB,0xEC,0x6B,0x12,0x2A,0x13,0x79,0x0F,0x20,0x1C,0x00,0x00}",
-    "min": "{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}",
-    "max": "{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}",
-    "length": 12,
-    "conversion": "byte_array"
+        "id": "0x0C",
+        "default": "{0xCB,0xEC,0x6B,0x12,0x2A,0x13,0x79,0x0F,0x20,0x1C,0x00,0x00}",
+        "min": "{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}",
+        "max": "{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}",
+        "length": 12,
+        "conversion": "byte_array",
+        "family": "0x08"
 }
 ```
 
-Setting id: 124 (0x7C)
+Setting family: 0 (0x00)
+
+Setting id: 12 (0x0C)
 
 Setting length: 12 (0x0C)
 
 Resulting settings message:
 
 ```txt
-0xCB 0xEC 0x6B 0x12 0x2A 0x13 0x79 0x0F 0x20 0x1C 0x00 0x00
+0x00 0x0C 0x0C 0xCB 0xEC 0x6B 0x12 0x2A 0x13 0x79 0x0F 0x20 0x1C 0x00 0x00
 ```
 
 Set the port to which we sent the message (our example uses `port 3` which is used by all settings).
@@ -103,13 +150,13 @@ value. App supports commands in hex format with "0x" preamble or in decimal form
 setting can be send either as:
 
 ```txt
-0x03 0x01 0x04 0xE8 0x03 0x00 0x00
+0x03 0x00 0x01 0x04 0xE8 0x03 0x00 0x00
 ```
 
 or as
 
 ```txt
-3 1 4 232 3 0 0
+3 0 1 4 232 3 0 0
 ```
 
 Spaces need to be added!
@@ -208,23 +255,23 @@ A2 00
 
 ### A3 - cmd_send_single_val
 
-Obtain value of a single value field, specified by its id. List of all values can be found in
-settings.json file under "values" cluster.
+Obtain value of a single value field, specified by its family and id. List of all values can be
+found in settings.json file under "values" cluster.
 
 ```txt
-A3 01 value_id
+A3 02 A0 value_id
 ```
 
 For example, to get value with id D1 send:
 
 ```txt
-A3 01 D1
+A3 02 A0 D1
 ```
 
 Tracker will respond on port 30 in the format:
 
 ```txt
-value_id value_length [value in byte array format]
+value_family value_id value_length [value in byte array format]
 ```
 
 ### A4 - cmd_send_status
@@ -265,22 +312,22 @@ A7 00
 
 ### A8 - cmd_send_single_setting
 
-Obtain value of a single setting field, specified by its id.
+Obtain value of a single setting field, specified by its family and id.
 
 ```txt
-A8 01 setting_id
+A8 02 setting_family setting_id
 ```
 
 For example, to get "cmd_name" send:
 
 ```txt
-A8 01 01
+A8 02 00 01
 ```
 
 Tracker will respond on port 3 in the format:
 
 ```txt
-setting_id setting_length [setting value in byte array format]
+setting_family setting_id setting_length [setting value in byte array format]
 ```
 
 ### A9 - cmd_reset_initial_position

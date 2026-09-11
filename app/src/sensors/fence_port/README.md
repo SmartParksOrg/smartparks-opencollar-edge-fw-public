@@ -59,20 +59,22 @@ Select the feature you'd like to use by enabling one of the following settings:
 
 ```json
 "fence_enabled": {
-    "id": "0x3F",
-    "default": false,
-    "min": false,
-    "max": true,
-    "length": 1,
-    "conversion": "bool"
-}
+  "id": "0x01",
+  "default": false,
+  "min": false,
+  "max": true,
+  "length": 1,
+  "conversion": "bool",
+  "family": "0x08"
+},
 "external_switch_detection_enabled": {
-    "id": "0x7E",
-    "default": false,
-    "min": false,
-    "max": true,
-    "length": 1,
-    "conversion": "bool"
+  "id": "0x0E",
+  "default": false,
+  "min": false,
+  "max": true,
+  "length": 1,
+  "conversion": "bool",
+  "family": "0x08"
 }
 ```
 
@@ -85,12 +87,12 @@ Select the feature you'd like to use by enabling one of the following settings:
 > [!NOTE]REMINDER Settings can be set by sending a message to a device on port 3. Example:
 >
 > ```txt
-> 0x3F 0x01 0x01
+> 0x08 0x01 0x01 0x01
 > ```
 >
 > If using the Smartparks connect app, navigate to `Actions/Management` and send the command to the
 > connected device with the added port number. Example:
 >
 > ```txt
-> 0x03 0x3F 0x01 0x01
+> 0x03 0x08 0x01 0x01 0x01
 > ```

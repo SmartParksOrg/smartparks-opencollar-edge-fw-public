@@ -9,6 +9,7 @@ ports = {}
 setting_struct_array = []
 setting_name_array = []
 setting_id_array = []
+setting_family_array = []
 setting_type_array = []
 setting_length_array = []
 
@@ -16,6 +17,7 @@ setting_length_array = []
 value_struct_array = []
 value_name_array = []
 value_id_array = []
+value_family_array = []
 value_type_array = []
 value_length_array = []
 
@@ -42,6 +44,7 @@ def add_setting_to_array(setting_dict):
     setting_struct_array.append(setting_dict["struct_name"])
     setting_name_array.append(setting_name)
     setting_id_array.append(setting_dict["id"])
+    setting_family_array.append(setting_dict["family"])
     setting_type_array.append(setting_dict["conversion"].lower())
     setting_length_array.append(setting_dict["length"])
 
@@ -52,6 +55,7 @@ def add_value_to_array(setting_dict):
     value_struct_array.append(setting_dict["struct_name"])
     value_name_array.append(value_name)
     value_id_array.append(setting_dict["id"])
+    value_family_array.append(setting_dict["family"])
     value_type_array.append(setting_dict["conversion"].lower())
     value_length_array.append(setting_dict["length"])
 
@@ -146,6 +150,8 @@ def write_setting(setting_name, setting_dict):
     h.write(setting_dict["max"] + ",\n    ")
     h.write(setting_dict["length"] + ",\n    ")
     h.write(setting_dict["conversion"])
+    if "family" in setting_dict:
+        h.write(",\n    " + setting_dict["family"])
     h.write("\n};\n\n")
 
 
@@ -179,27 +185,36 @@ def write_setting_struct():
     """Write the aggregate settings structure and its lookup tables."""
     # ID array
     h.write("uint8_t id_array[] = {")
-    for myid in setting_id_array:
+    for i, myid in enumerate(setting_id_array):
         h.write(myid)
-        if myid != setting_id_array[-1]:
+        if i < len(setting_id_array) - 1:
             h.write(", ")
     h.write("};\n")
 
+    # Family array
+    h.write("uint8_t family_array[] = {")
+    for i, myfam in enumerate(setting_family_array):
+        h.write(myfam)
+        if i < len(setting_family_array) - 1:
+            h.write(", ")
+    h.write("};\n\n")
+
     # Length array
     h.write("uint8_t len_array[] = {")
-    for i in range(len(setting_length_array)):
-        mylen = setting_length_array[i]
+    for i, mylen in enumerate(setting_length_array):
         h.write(mylen)
         if i < len(setting_length_array) - 1:
             h.write(", ")
     h.write("};\n\n")
 
+    # Careful! Order matters and must be preserved.
     h.write("main_settings Main_settings = \n")
     h.write("{\n")
     for name in setting_name_array:
         h.write("    &" + name + ",\n")
     h.write("    " + str(len(setting_id_array)) + ",\n")
     h.write("    id_array,\n")
+    h.write("    family_array,\n")
     h.write("    len_array\n")
     h.write("};\n\n")
 
@@ -215,6 +230,14 @@ def write_values_struct():
             h.write(", ")
     h.write("};\n")
 
+    # Family array
+    h.write("uint8_t val_family_array[] = {")
+    for myfam in range(len(value_family_array)):
+        h.write(value_family_array[myfam])
+        if myfam < len(value_family_array) - 1:
+            h.write(", ")
+    h.write("};\n\n")
+
     # Length array
     h.write("uint8_t val_len_array[] = {")
     for i in range(len(value_length_array)):
@@ -229,6 +252,7 @@ def write_values_struct():
         h.write("    &" + name + ",\n")
     h.write("    " + str(len(value_id_array)) + ",\n")
     h.write("    val_id_array,\n")
+    h.write("    val_family_array,\n")
     h.write("    val_len_array\n")
     h.write("};\n\n")
 
@@ -237,25 +261,25 @@ def write_message_struct():
     """Write the aggregate messages structure and its lookup tables."""
     # ID array
     h.write("uint8_t mes_id_array[] = {")
-    for myid in message_id_array:
+    for i, myid in enumerate(message_id_array):
         h.write(myid)
-        if myid != message_id_array[-1]:
+        if i < len(message_id_array) - 1:
             h.write(", ")
     h.write("};\n")
 
     # Length array
     h.write("uint8_t mes_len_array[] = {")
-    for i in range(len(message_length_array)):
-        h.write(message_length_array[i])
-        if i != len(message_length_array) - 1:
+    for i, mylen in enumerate(message_length_array):
+        h.write(mylen)
+        if i < len(message_length_array) - 1:
             h.write(", ")
     h.write("};\n")
 
     # Port array
     h.write("uint8_t mes_port_array[] = {")
-    for i in range(len(message_port_array)):
-        h.write(message_port_array[i])
-        if i != len(message_port_array) - 1:
+    for i, myport in enumerate(message_port_array):
+        h.write(myport)
+        if i < len(message_port_array) - 1:
             h.write(", ")
     h.write("};\n\n")
 
@@ -273,10 +297,12 @@ def write_message_struct():
 def write_function_get_setting_struct_byID():
     """Write the generated helper that returns a setting struct by ID."""
     # Function get setting by id
-    h.write("void *get_setting_struct_by_id(uint8_t id){\n")
-    h.write("switch(id) {\n")
-    for name, myid in zip(setting_name_array, setting_id_array):
-        h.write("case " + myid + ":\n")
+    h.write("void *get_setting_struct_by_id(uint8_t family, uint8_t id){\n")
+    h.write("switch(MAKE_KEY(family, id)) {\n")
+    for name, myid, myfam in zip(
+        setting_name_array, setting_id_array, setting_family_array
+    ):
+        h.write("case MAKE_KEY(" + myfam + ", " + myid + "):\n")
         h.write("    return Main_settings." + name + ";\n")
     h.write("default:\n")
     h.write("    return NULL;\n}\n}\n\n")
@@ -285,12 +311,16 @@ def write_function_get_setting_struct_byID():
 def write_function_get_setting_byID():
     """Write the generated helper that serializes a setting by ID."""
     # Function get setting by id
-    h.write("int get_setting_by_id(uint8_t id, uint8_t *bytes){\n")
-    h.write("switch(id) {\n")
-    for name, myid, val_type, mylen in zip(
-        setting_name_array, setting_id_array, setting_type_array, setting_length_array
+    h.write("int get_setting_by_id(uint8_t family, uint8_t id, uint8_t *bytes){\n")
+    h.write("switch(MAKE_KEY(family, id)) {\n")
+    for name, myid, myfam, val_type, mylen in zip(
+        setting_name_array,
+        setting_id_array,
+        setting_family_array,
+        setting_type_array,
+        setting_length_array,
     ):
-        h.write("case " + myid + ":\n")
+        h.write("case MAKE_KEY(" + myfam + ", " + myid + "):\n")
         if val_type == "byte_array":
             h.write(
                 "    "
@@ -317,10 +347,10 @@ def write_function_get_setting_byID():
 def write_function_get_value_struct_byID():
     """Write the generated helper that returns a value struct by ID."""
     # Function get setting by id
-    h.write("void *get_value_struct_by_id(uint8_t id){\n")
-    h.write("switch(id) {\n")
-    for name, myid in zip(value_name_array, value_id_array):
-        h.write("case " + myid + ":\n")
+    h.write("void *get_value_struct_by_id(uint8_t family, uint8_t id){\n")
+    h.write("switch(MAKE_KEY(family, id)) {\n")
+    for name, myid, myfam in zip(value_name_array, value_id_array, value_family_array):
+        h.write("case MAKE_KEY(" + myfam + ", " + myid + "):\n")
         h.write("    return Main_values." + name + ";\n")
     h.write("default:\n")
     h.write("    return NULL;\n}\n}\n\n")
@@ -329,12 +359,16 @@ def write_function_get_value_struct_byID():
 def write_function_get_value_byID():
     """Write the generated helper that serializes a value by ID."""
     # Function get setting by id
-    h.write("int get_value_by_id(uint8_t id, uint8_t *bytes){\n")
-    h.write("switch(id) {\n")
-    for name, myid, val_type, mylen in zip(
-        value_name_array, value_id_array, value_type_array, value_length_array
+    h.write("int get_value_by_id(uint8_t family, uint8_t id, uint8_t *bytes){\n")
+    h.write("switch(MAKE_KEY(family, id)) {\n")
+    for name, myid, myfam, val_type, mylen in zip(
+        value_name_array,
+        value_id_array,
+        value_family_array,
+        value_type_array,
+        value_length_array,
     ):
-        h.write("case " + myid + ":\n")
+        h.write("case MAKE_KEY(" + myfam + ", " + myid + "):\n")
         if val_type == "byte_array":
             h.write(
                 "    "
@@ -361,12 +395,14 @@ def write_function_get_value_byID():
 def write_function_set_setting_value_byID():
     """Write the generated helper that updates a setting value by ID."""
     # Function set value by id
-    h.write("int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len){\n")
-    h.write("switch(id) {\n")
-    for name, myid, val_type in zip(
-        setting_name_array, setting_id_array, setting_type_array
+    h.write(
+        "int set_setting_value_by_id(uint8_t family, uint8_t id, uint8_t *data, uint8_t len){\n"
+    )
+    h.write("switch(MAKE_KEY(family, id)) {\n")
+    for name, myid, myfam, val_type in zip(
+        setting_name_array, setting_id_array, setting_family_array, setting_type_array
     ):
-        h.write("case " + myid + ":\n")
+        h.write("case MAKE_KEY(" + myfam + ", " + myid + "):\n")
         if val_type == "byte_array":
             h.write("    if(len <= Main_settings." + name + "->len) {\n")
             h.write("        for(int i=0; i<len; i++) {\n")
@@ -418,8 +454,9 @@ def write_define_setting_struct():
     h.write("typedef struct main_settings {\n")
     for struct, name in zip(setting_struct_array, setting_name_array):
         h.write("    " + struct + " *" + name + ";\n")
-    h.write("\n    uint8_t n_settings;\n")
+    h.write("\n    uint16_t n_settings;\n")
     h.write("    uint8_t *settings_id;\n")
+    h.write("    uint8_t *settings_family;\n")
     h.write("    uint8_t *settings_length;\n")
     h.write("} main_settings;\n\n")
 
@@ -432,6 +469,7 @@ def write_define_values_struct():
         h.write("    " + struct + " *" + name + ";\n")
     h.write("\n    uint8_t n_values;\n")
     h.write("    uint8_t *values_id;\n")
+    h.write("    uint8_t *values_family;\n")
     h.write("    uint8_t *values_length;\n")
     h.write("} main_values;\n\n")
 
@@ -478,6 +516,8 @@ if json_data:
         h.write('#include "settings_def.h"\n')
         h.write("#include <stdio.h>\n\n")
 
+        h.write("#define MAKE_KEY(family, id) (((family) << 8) | (id))\n")
+
         # Settings
         if "settings" in json_data:
             # Loop over settings
@@ -508,10 +548,10 @@ if json_data:
         h.write('#include "type_conversion.h"\n\n')
         write_define_setting_struct()
         h.write("extern main_settings Main_settings;\n")
-        h.write("int get_setting_by_id(uint8_t id, uint8_t *data);\n")
-        h.write("void *get_setting_struct_by_id(uint8_t id);\n\n")
+        h.write("int get_setting_by_id(uint8_t family, uint8_t id, uint8_t *data);\n")
+        h.write("void *get_setting_struct_by_id(uint8_t family, uint8_t id);\n\n")
         h.write(
-            "int set_setting_value_by_id(uint8_t id, uint8_t *data, uint8_t len);\n\n"
+            "int set_setting_value_by_id(uint8_t family, uint8_t id, uint8_t *data, uint8_t len);\n\n"
         )
         h.write("#endif\n")
     # END SETTINGS ===========================================================================
@@ -544,6 +584,9 @@ if json_data:
         h.write("/* AUTOGENERATED FILE - DO NOT MODIFY! */\n")
         h.write('#include "values_def.h"\n')
         h.write("#include <stdio.h>\n\n")
+
+        h.write("#define MAKE_KEY(family, id) (((family) << 8) | (id))\n")
+
         if "values" in json_data:
             # Loop over commands
             for value_name in json_data["values"]:
@@ -572,9 +615,11 @@ if json_data:
         h.write('#include "type_conversion.h"\n\n')
         write_define_values_struct()
         h.write("extern main_values Main_values;\n")
-        h.write("void *get_value_struct_by_id(uint8_t id);\n")
-        h.write("int get_value_by_id(uint8_t id, uint8_t *data);\n")
-        h.write("int set_value_by_id(uint8_t id, uint8_t *data, uint8_t len);\n\n")
+        h.write("void *get_value_struct_by_id(uint8_t family, uint8_t id);\n")
+        h.write("int get_value_by_id(uint8_t family, uint8_t id, uint8_t *data);\n")
+        h.write(
+            "int set_value_by_id(uint8_t family, uint8_t id, uint8_t *data, uint8_t len);\n\n"
+        )
         h.write("#endif\n")
 
     # MESSAGES     =============================================================================

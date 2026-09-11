@@ -24,6 +24,8 @@
 
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/sys/crc.h>
 
 /* lr11xx driver */
 #include "lr11xx_board.h"
@@ -131,6 +133,24 @@ struct lorawan_message {
 	bool join_attempt;                  /* Join attempt if not joined */
 };
 
+/**
+ * @brief Activation settings that identify the LoRaWAN session in use.
+ */
+struct lorawan_activation_configuration {
+	uint8_t region;
+	uint8_t reserved[3];
+	uint8_t join_eui[8];
+	uint32_t app_key_crc;
+};
+
+/**
+ * @brief Persisted activation settings associated with the stored LoRaWAN session.
+ */
+struct lorawan_joined_configuration {
+	struct lorawan_activation_configuration activation;
+	uint32_t crc; /* Detects payload corruption not covered by the NVS metadata CRC. */
+};
+
 enum lorawan_cmd_type {
 	LORAWAN_CMD_LEAVE_NETWORK = 0,
 	LORAWAN_CMD_RESET = 1,
@@ -190,6 +210,8 @@ static void on_modem_down_data(int8_t rssi, int8_t snr,
 /* CUSTOM STORAGE IMPLEMENTATION */
 static void context_store(const uint8_t ctx_id, const uint8_t *buffer, const uint32_t size);
 static void context_restore(const uint8_t ctx_id, uint8_t *buffer, const uint32_t size);
+static int prv_start_join(void);
+static void prv_apply_adr_profile(void);
 
 /* Downlink external handler function pointer */
 lorawan_recv_handler_t prv_downlink_data_handler = NULL;
@@ -210,6 +232,29 @@ static struct smtc_app_lorawan_cfg lorawan_cfg = {
 	.class = SMTC_MODEM_CLASS_A,
 	.region = SMTC_MODEM_REGION_EU_868,
 };
+
+/**
+ * @brief Ensures a complete LoRaWAN configuration is applied without interruption by a settings
+ * update.
+ */
+K_MUTEX_DEFINE(lorawan_cfg_mutex);
+
+/**
+ * @brief Latched when an activation setting changes after initial configuration.
+ *
+ * Only cleared by a new join sequence.
+ */
+static atomic_t lorawan_activation_change_pending;
+
+/**
+ * @brief Distinguishes the initial configuration load from a runtime setting change.
+ */
+static bool lorawan_configuration_initialized;
+
+static struct lorawan_activation_configuration joined_configuration;
+static bool joined_configuration_valid;
+static struct lorawan_activation_configuration join_attempt_configuration;
+static bool join_attempt_configuration_valid;
 
 static struct smtc_app_event_callbacks event_callbacks = {
 	.reset = on_modem_reset,
@@ -244,6 +289,104 @@ static bool lorawan_wait_tx_done = false;
 static uint8_t tx_max_payload = LORAWAN_MAX_BUF_SIZE;
 
 static bool prv_vhf_burst_queued = false;
+
+/**
+ * @brief Restore the activation configuration associated with the persisted session.
+ */
+static void prv_restore_joined_configuration(void)
+{
+	struct lorawan_joined_configuration stored = {0};
+
+	joined_configuration_valid = false;
+	if (nvs_storage_read(STORAGE_lorawan_joined_cfg, &stored, sizeof(stored)) !=
+	    sizeof(stored)) {
+		return;
+	}
+	if (crc32_ieee((const uint8_t *)&stored, sizeof(stored) - sizeof(stored.crc)) !=
+	    stored.crc) {
+		LOG_WRN("Stored LoRaWAN joined configuration is invalid");
+		return;
+	}
+
+	joined_configuration = stored.activation;
+	joined_configuration_valid = true;
+}
+
+/**
+ * @brief Persist the activation configuration without invalidating a successfully joined RAM
+ * session.
+ */
+static void prv_store_joined_configuration(void)
+{
+	struct lorawan_joined_configuration stored = {0};
+
+	if (!join_attempt_configuration_valid) {
+		LOG_ERR("Joined without a matching activation configuration");
+		joined_configuration_valid = false;
+		return;
+	}
+
+	stored.activation = join_attempt_configuration;
+	stored.crc = crc32_ieee((const uint8_t *)&stored, sizeof(stored) - sizeof(stored.crc));
+	if (nvs_storage_write(STORAGE_lorawan_joined_cfg, &stored, sizeof(stored)) != 0) {
+		LOG_ERR("Failed to persist LoRaWAN joined configuration");
+	}
+
+	joined_configuration = join_attempt_configuration;
+	joined_configuration_valid = true;
+}
+
+/**
+ * @brief Configure the modem with the latest settings and start a join.
+ *
+ * A pending activation change is consumed only when the join is successfully started. If starting
+ * the join fails, the pending flag remains set so the next uplink retries it.
+ *
+ * @return 0 on success, otherwise a modem error code.
+ */
+static int prv_start_join(void)
+{
+	int err;
+	bool activation_change_was_pending;
+
+	/* Prevent an old configuration from being paired with the new persisted session. */
+	err = nvs_storage_delete(STORAGE_lorawan_joined_cfg);
+	if (err != 0) {
+		LOG_ERR("Failed to invalidate stored LoRaWAN joined configuration: %d", err);
+		return err;
+	}
+	joined_configuration_valid = false;
+
+	k_mutex_lock(&lorawan_cfg_mutex, K_FOREVER);
+	activation_change_was_pending = atomic_get(&lorawan_activation_change_pending) != 0;
+	err = smtc_app_configure_lorawan_params(STACK_ID, &lorawan_cfg);
+	if (!err) {
+		join_attempt_configuration.region = lorawan_cfg.region;
+		memcpy(join_attempt_configuration.join_eui, lorawan_cfg.join_eui,
+		       sizeof(join_attempt_configuration.join_eui));
+		join_attempt_configuration.app_key_crc =
+			crc32_ieee(lorawan_cfg.app_key, sizeof(lorawan_cfg.app_key));
+		join_attempt_configuration_valid = true;
+		atomic_clear(&lorawan_activation_change_pending);
+	}
+	k_mutex_unlock(&lorawan_cfg_mutex);
+	if (err) {
+		LOG_ERR("ERR code: %d. Failed to configure LoRaWAN parameters", err);
+		return err;
+	}
+
+	err = smtc_modem_join_network(STACK_ID);
+	if (err) {
+		LOG_ERR("ERR code: %d. Failed to start join sequence", err);
+		join_attempt_configuration_valid = false;
+		if (activation_change_was_pending) {
+			atomic_set(&lorawan_activation_change_pending, 1);
+		}
+		return err;
+	}
+	lorawan_joining = true;
+	return 0;
+}
 
 /**
  * @brief Put new event in event que
@@ -422,7 +565,6 @@ static void prv_lorawan_handle_events(k_timeout_t timeout)
 
 	switch (event.type) {
 	case LORAWAN_EVENT_MESSAGE: {
-
 		/* Check if we are in the run engine state */
 		if (state != LORAWAN_ENGINE) {
 			LOG_WRN("LoraWAN engine not active, cannot send message, store for "
@@ -435,6 +577,27 @@ static void prv_lorawan_handle_events(k_timeout_t timeout)
 		/* Check if lorawan module is enabled */
 		if (!lorawan_enabled) {
 			LOG_WRN("LoraWAN module is not enabled, discard message!");
+			break;
+		}
+
+		if (atomic_get(&lorawan_activation_change_pending)) {
+			LOG_WRN("LoRaWAN activation setting changed; start a new join");
+			if (lorawan_is_joined() || lorawan_joining) {
+				err = smtc_modem_leave_network(STACK_ID);
+				if (err) {
+					LOG_ERR("ERR code: %d. Failed to leave network", err);
+					prv_put_msg_in_que(event);
+					break;
+				}
+				lorawan_joining = false;
+				join_attempt_configuration_valid = false;
+			}
+
+			err = prv_start_join();
+			if (err) {
+				LOG_WRN("Could not start the new join; keep message for later");
+			}
+			prv_put_msg_in_que(event);
 			break;
 		}
 
@@ -451,13 +614,10 @@ static void prv_lorawan_handle_events(k_timeout_t timeout)
 			if (!lorawan_joining) {
 				/*  start join sequence */
 				LOG_WRN("Start new join sequence!");
-				err = smtc_modem_join_network(STACK_ID);
+				err = prv_start_join();
 				if (err) {
-					LOG_ERR("ERR code: %d. Failed to start join "
-						"sequence",
-						err);
+					LOG_WRN("Could not start a new join sequence!");
 				}
-				lorawan_joining = true;
 			}
 			LOG_WRN("LoraWAN not joined yet, attempt join and store message "
 				"for later!");
@@ -482,6 +642,7 @@ static void prv_lorawan_handle_events(k_timeout_t timeout)
 			}
 			tx_max_payload = LORAWAN_MAX_BUF_SIZE;
 			lorawan_joining = false;
+			join_attempt_configuration_valid = false;
 			lorawan_join_failed_counter = 0;
 			break;
 		}
@@ -496,6 +657,8 @@ static void prv_lorawan_handle_events(k_timeout_t timeout)
 			if (err) {
 				LOG_ERR("ERR code: %d. Failed to leave network", err);
 			}
+			lorawan_joining = false;
+			join_attempt_configuration_valid = false;
 			/* Go to init state */
 			state = LORAWAN_INIT;
 			break;
@@ -818,7 +981,9 @@ static void lorawan_main_loop(void)
 			/* Reset prv variables */
 			lorawan_join_failed_counter = 0;
 			lorawan_joining = false;
+			join_attempt_configuration_valid = false;
 			tx_max_payload = LORAWAN_MAX_BUF_SIZE;
+			prv_restore_joined_configuration();
 
 			/* configure LoRaWAN modem */
 			smtc_app_init(&modem_radio, &event_callbacks, &env_callbacks);
@@ -879,20 +1044,52 @@ static void on_modem_reset(uint16_t reset_count)
 			LORAWAN_TX_POWER_OFFSET);
 	}
 
-	/* configure lorawan parameters after reset */
-	err = smtc_app_configure_lorawan_params(STACK_ID, &lorawan_cfg);
-	if (err) {
-		LOG_ERR("ERR code: %d. Failed to configure lorawan params", err);
+	if (lorawan_is_joined()) {
+		bool activation_configuration_matches = false;
+
+		if (joined_configuration_valid) {
+			/* Keep the desired configuration unchanged during the boot-time comparison.
+			 */
+			k_mutex_lock(&lorawan_cfg_mutex, K_FOREVER);
+			activation_configuration_matches =
+				joined_configuration.region == lorawan_cfg.region &&
+				joined_configuration.app_key_crc ==
+					crc32_ieee(lorawan_cfg.app_key,
+						   sizeof(lorawan_cfg.app_key)) &&
+				memcmp(joined_configuration.join_eui, lorawan_cfg.join_eui,
+				       sizeof(joined_configuration.join_eui)) == 0;
+			k_mutex_unlock(&lorawan_cfg_mutex);
+		}
+
+		/* Resume only when the restored session was joined with the desired settings. */
+		if (activation_configuration_matches) {
+			LOG_INF("Restored the existing LoRaWAN session");
+			prv_apply_adr_profile();
+			prv_lorawan_reschedule_messages();
+			return;
+		}
+
+		LOG_WRN("Restored LoRaWAN session does not match current activation settings");
+		bool joined_configuration_was_valid = joined_configuration_valid;
+		atomic_set(&lorawan_activation_change_pending, 1);
+		err = smtc_modem_leave_network(STACK_ID);
+		if (err) {
+			LOG_ERR("ERR code: %d. Failed to invalidate restored session", err);
+			return;
+		}
+		if (!joined_configuration_was_valid) {
+			/* Treat a missing/corrupt identity record like any other unrestorable
+			 * session. */
+			prv_start_join();
+		}
 		return;
 	}
 
-	/*  start join sequence */
-	err = smtc_modem_join_network(STACK_ID);
+	/* No valid session was restored, so retain the existing bootstrap auto-join behavior. */
+	err = prv_start_join();
 	if (err) {
-		LOG_ERR("ERR code: %d. Failed to start join sequence", err);
 		return;
 	}
-	lorawan_joining = true;
 }
 
 /**
@@ -900,19 +1097,8 @@ static void on_modem_reset(uint16_t reset_count)
  */
 static void on_modem_network_joined(void)
 {
-	int err = 0;
-	/* Set adr profile */
-	if (prv_adr_profile == SMTC_MODEM_ADR_PROFILE_CUSTOM) {
-		err = smtc_modem_adr_set_profile(STACK_ID, prv_adr_profile, prv_adr_custom_list);
-	} else {
-		err = smtc_modem_adr_set_profile(STACK_ID, prv_adr_profile, NULL);
-	}
-
-	if (err) {
-		LOG_ERR("ERR code: %d. Failed to set ADR profile", err);
-	}
-
-	LOG_INF("Set ADR to custom value: %d", prv_adr_custom_list[0]);
+	prv_store_joined_configuration();
+	prv_apply_adr_profile();
 
 	/* Terminate joining process */
 	lorawan_joining = false;
@@ -945,6 +1131,7 @@ static void on_modem_join_fail(void)
 		}
 		LOG_WRN("Leave network and stop joining!");
 		lorawan_joining = false;
+		join_attempt_configuration_valid = false;
 		lorawan_join_failed_counter = 0;
 	}
 }
@@ -1013,7 +1200,9 @@ static void context_store(const uint8_t ctx_id, const uint8_t *buffer, const uin
 	LOG_WRN("Context store. ID: %d, size: %d", ctx_id, size);
 	LOG_HEXDUMP_WRN(buffer, size, "Context buffer:");
 
-	nvs_storage_write(STORAGE_lorawan_ctx_id0 + ctx_id, buffer, size);
+	if (nvs_storage_write(STORAGE_lorawan_ctx_id0 + ctx_id, buffer, size) != 0) {
+		LOG_ERR("Failed to persist critical LoRaWAN context %d", ctx_id);
+	}
 }
 
 /**
@@ -1027,6 +1216,7 @@ static void context_restore(const uint8_t ctx_id, uint8_t *buffer, const uint32_
 {
 	LOG_WRN("Context restore. ID: %d, size: %d", ctx_id, size);
 
+	memset(buffer, 0, size);
 	nvs_storage_read(STORAGE_lorawan_ctx_id0 + ctx_id, buffer, size);
 }
 
@@ -1052,6 +1242,32 @@ static smtc_modem_adr_profile_t prv_get_smtc_adr_profile(enum lorawan_adr_profil
 	}
 }
 
+/**
+ * @brief Apply the configured ADR profile to the current LoRaWAN session.
+ */
+static void prv_apply_adr_profile(void)
+{
+	int err;
+	smtc_modem_adr_profile_t adr_profile;
+	uint8_t adr_custom_list[sizeof(prv_adr_custom_list)];
+
+	k_mutex_lock(&lorawan_cfg_mutex, K_FOREVER);
+	adr_profile = prv_adr_profile;
+	memcpy(adr_custom_list, prv_adr_custom_list, sizeof(adr_custom_list));
+	k_mutex_unlock(&lorawan_cfg_mutex);
+
+	if (adr_profile == SMTC_MODEM_ADR_PROFILE_CUSTOM) {
+		err = smtc_modem_adr_set_profile(STACK_ID, adr_profile, adr_custom_list);
+	} else {
+		err = smtc_modem_adr_set_profile(STACK_ID, adr_profile, NULL);
+	}
+
+	if (err) {
+		LOG_ERR("ERR code: %d. Failed to set ADR profile", err);
+	}
+	LOG_INF("Set ADR to custom value: %d", adr_custom_list[0]);
+}
+
 void lorawan_recv_handler_register(lorawan_recv_handler_t handler)
 {
 	prv_downlink_data_handler = handler;
@@ -1060,10 +1276,22 @@ void lorawan_recv_handler_register(lorawan_recv_handler_t handler)
 void lorawan_set_configuration(uint8_t join_eui[8], uint8_t app_key[16], uint8_t region,
 			       uint8_t adr, enum lorawan_adr_profile adr_profile)
 {
+	bool activation_configuration_changed;
+
 	/* Update settings */
+	k_mutex_lock(&lorawan_cfg_mutex, K_FOREVER);
+	activation_configuration_changed =
+		lorawan_configuration_initialized &&
+		(region != lorawan_cfg.region ||
+		 memcmp(join_eui, lorawan_cfg.join_eui, sizeof(lorawan_cfg.join_eui)) != 0 ||
+		 memcmp(app_key, lorawan_cfg.app_key, sizeof(lorawan_cfg.app_key)) != 0);
 	memcpy(lorawan_cfg.join_eui, join_eui, sizeof(lorawan_cfg.join_eui));
 	memcpy(lorawan_cfg.app_key, app_key, sizeof(lorawan_cfg.app_key));
 	lorawan_cfg.region = region;
+	lorawan_configuration_initialized = true;
+	if (activation_configuration_changed) {
+		atomic_set(&lorawan_activation_change_pending, 1);
+	}
 
 	/* Set ADR profile */
 	prv_adr_profile = prv_get_smtc_adr_profile(adr_profile);
@@ -1073,6 +1301,7 @@ void lorawan_set_configuration(uint8_t join_eui[8], uint8_t app_key[16], uint8_t
 	for (int i = 0; i < sizeof(prv_adr_custom_list); i++) {
 		prv_adr_custom_list[i] = set_adr;
 	}
+	k_mutex_unlock(&lorawan_cfg_mutex);
 }
 
 void lorawan_start(void)
@@ -1152,7 +1381,9 @@ int lorawan_get_dev_eui(uint8_t dev_eui[8])
 
 void lorawan_get_nwkkey(uint8_t nwkkey[16])
 {
+	k_mutex_lock(&lorawan_cfg_mutex, K_FOREVER);
 	memcpy(nwkkey, lorawan_cfg.app_key, sizeof(lorawan_cfg.app_key));
+	k_mutex_unlock(&lorawan_cfg_mutex);
 }
 
 bool lorawan_is_enabled(void)

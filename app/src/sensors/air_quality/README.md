@@ -27,20 +27,22 @@ enabled recipients (e.g. `lr_send_flag`). By default the result are send over Lo
 
 ```json
 "air_quality_enabled": {
-    "id": "0x86",
+    "id": "0x16",
     "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x08"
 },
 "air_quality_interval": {
-    "id": "0x87",
+    "id": "0x17",
     "default": 300,
     "min": 10,
     "max": 86400,
     "length": 4,
-    "conversion": "uint32"
+    "conversion": "uint32",
+    "family": "0x08"
 }
 ```
 

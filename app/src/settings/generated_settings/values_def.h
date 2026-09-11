@@ -32,12 +32,13 @@ typedef struct main_values {
 
 	uint8_t n_values;
 	uint8_t *values_id;
+	uint8_t *values_family;
 	uint8_t *values_length;
 } main_values;
 
 extern main_values Main_values;
-void *get_value_struct_by_id(uint8_t id);
-int get_value_by_id(uint8_t id, uint8_t *data);
-int set_value_by_id(uint8_t id, uint8_t *data, uint8_t len);
+void *get_value_struct_by_id(uint8_t family, uint8_t id);
+int get_value_by_id(uint8_t family, uint8_t id, uint8_t *data);
+int set_value_by_id(uint8_t family, uint8_t id, uint8_t *data, uint8_t len);
 
 #endif

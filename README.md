@@ -318,7 +318,7 @@ combinations:
 | `rhinopuck_nrf52840`   | `1.3.0`                            | `rhinopuck_tracker`                                                                                                                           |
 | `rhinopuck35_nrf52840` | `1.2.0`                            | `rhinopuck_tracker`                                                                                                                           |
 | `collaredge_nrf52840`  | `1.0.0`, `1.1.0`, `1.4.0`          | `collaredge_tracker`                                                                                                                          |
-| `freeedge_nrf52840`    | `1.0.0`, `1.3.0`, `1.6.0`          | `freeedge_tracker`                                                                                                                            |
+| `freeedge_nrf52840`    | `1.0.0`, `1.3.0`, `1.6.0`, `1.7.0` | `freeedge_tracker`                                                                                                                            |
 
 Main user-observable difference between tracker types will be displayed image in the BT app.
 

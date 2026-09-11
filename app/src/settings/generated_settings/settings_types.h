@@ -93,6 +93,7 @@ typedef struct {
 	uint8_t max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_uint8;
 
@@ -103,6 +104,7 @@ typedef struct {
 	uint16_t max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_uint16;
 
@@ -113,6 +115,7 @@ typedef struct {
 	uint32_t max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_uint32;
 
@@ -123,6 +126,7 @@ typedef struct {
 	int8_t max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_int8;
 
@@ -133,6 +137,7 @@ typedef struct {
 	int16_t max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_int16;
 
@@ -143,6 +148,7 @@ typedef struct {
 	int32_t max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_int32;
 
@@ -153,6 +159,7 @@ typedef struct {
 	int16_t max[2];
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_float;
 
@@ -163,6 +170,7 @@ typedef struct {
 	uint8_t *max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_byte_array;
 
@@ -173,6 +181,7 @@ typedef struct {
 	bool max;
 	uint8_t len;
 	conversion_t conversion;
+	uint8_t family;
 
 } value_bool;
 

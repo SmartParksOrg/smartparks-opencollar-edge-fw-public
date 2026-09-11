@@ -275,7 +275,8 @@ static bool prv_check_lr_join_interval(void)
 	/* If set to 0, set it to max interval value */
 	if (Main_settings.rejoin_interval->def_val == 0) {
 		Main_settings.rejoin_interval->def_val = Main_settings.rejoin_interval->max;
-		nvs_storage_write(Main_settings.rejoin_interval->id,
+		nvs_storage_write(MAKE_SETTING_KEY(Main_settings.rejoin_interval->family,
+						   Main_settings.rejoin_interval->id),
 				  &Main_settings.rejoin_interval->def_val,
 				  Main_settings.rejoin_interval->len);
 		LOG_WRN("User tried to turn off re-join. Set it to max value of: %d s",
@@ -323,7 +324,8 @@ static bool prv_check_send_status_interval(void)
 	if (Main_settings.status_send_interval->def_val == 0) {
 		Main_settings.status_send_interval->def_val =
 			Main_settings.status_send_interval->max;
-		nvs_storage_write(Main_settings.status_send_interval->id,
+		nvs_storage_write(MAKE_SETTING_KEY(Main_settings.status_send_interval->family,
+						   Main_settings.status_send_interval->id),
 				  &Main_settings.status_send_interval->def_val,
 				  Main_settings.status_send_interval->len);
 		LOG_WRN("User tried to turn off send status. Set it to max value of: %d s",
@@ -1802,9 +1804,17 @@ void handle_communication_thread_messages(void)
 				break;
 			}
 			case CMD_GET_UBLOX_FIX: {
-				/* If GPS is not enabled, reset module */
+				/* If GPS is not enabled, reset and reinitialize the module. */
 				if (!gps_get_enabled()) {
-					gps_reset();
+					err = gps_reset();
+					if (err) {
+						port = Main_messages.msg_ublox_location->port;
+						msg_size = 0;
+						break;
+					}
+				} else {
+					/* Start a fresh acquisition for an explicit request. */
+					gps_reset_fix_state();
 				}
 				// Get new fix - wait until new fix or error on th try is received
 				err = prv_obtain_ublox_fix();
@@ -1819,11 +1829,17 @@ void handle_communication_thread_messages(void)
 				break;
 			}
 			case CMD_GET_UBLOX_SATELLITE_DATA: {
-				// Check if gps is enabled
-				bool gps_ok = gps_get_enabled();
-				// If not reset module
-				if (!gps_ok) {
-					gps_reset();
+				/* If GPS is not enabled, reset and reinitialize the module. */
+				if (!gps_get_enabled()) {
+					err = gps_reset();
+					if (err) {
+						msg_size = 0;
+						port = Main_messages.msg_ublox_satellites->port;
+						break;
+					}
+				} else {
+					/* Start a fresh acquisition for an explicit request. */
+					gps_reset_fix_state();
 				}
 				// Get new fix - wait until new fix or error on th try is received
 				err = prv_obtain_ublox_fix();
@@ -2489,8 +2505,9 @@ void lr_start(void)
 	/* Get device id */
 	int err = lorawan_get_dev_eui(Main_settings.device_eui->def_val);
 	if (!err) {
-		nvs_storage_write(Main_settings.device_eui->id, Main_settings.device_eui->def_val,
-				  Main_settings.device_eui->len);
+		nvs_storage_write(MAKE_SETTING_KEY(Main_settings.device_eui->family,
+						   Main_settings.device_eui->id),
+				  Main_settings.device_eui->def_val, Main_settings.device_eui->len);
 	}
 
 	/* Update Almanac if needed */
@@ -2540,8 +2557,9 @@ int lr_reset(void)
 	/* Get device id */
 	int err = lorawan_get_dev_eui(Main_settings.device_eui->def_val);
 	if (!err) {
-		nvs_storage_write(Main_settings.device_eui->id, Main_settings.device_eui->def_val,
-				  Main_settings.device_eui->len);
+		nvs_storage_write(MAKE_SETTING_KEY(Main_settings.device_eui->family,
+						   Main_settings.device_eui->id),
+				  Main_settings.device_eui->def_val, Main_settings.device_eui->len);
 	}
 
 	/* Update Almanac if needed */

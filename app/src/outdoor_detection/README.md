@@ -15,28 +15,31 @@ The module currently operates with 3 user-configurable settings:
 
 ```yaml
 "outdoor_detection_enabled": {
-    "id": "0x7A",
+    "id": "0x0A",
     "default": false,
     "min": false,
     "max": true,
     "length": 1,
-    "conversion": "bool"
+    "conversion": "bool",
+    "family": "0x08"
 },
 "outdoor_detection_tau": {
-    "id": "0x7B",
+    "id": "0x0B",
     "default": 11,
     "min": 0,
     "max": 100,
     "length": 1,
-    "conversion": "uint8"
+    "conversion": "uint8",
+    "family": "0x08"
 },
 "outdoor_detection_parameters": {
-    "id": "0x7C",
+    "id": "0x0C",
     "default": "{0xCB,0xEC,0x6B,0x12,0x2A,0x13,0x79,0x0F,0x20,0x1C,0x00,0x00}",
     "min": "{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}",
     "max": "{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}",
     "length": 12,
-    "conversion": "byte_array"
+    "conversion": "byte_array",
+    "family": "0x08"
 }
 ```
 

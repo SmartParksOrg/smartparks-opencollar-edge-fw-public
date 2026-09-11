@@ -41,7 +41,7 @@ void gps_ublox_flush_data(void);
 void gps_ublox_clear_buffer(void); // Clear I2C buffer - read all
 void gps_ublox_reset_sat_data(void);
 
-void gps_ublox_reset(void);
+int gps_ublox_reset(void);
 
 void gps_ublox_print_position_data(struct gps_ublox_position_data *position);
 
