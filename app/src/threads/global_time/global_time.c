@@ -13,13 +13,22 @@
 #include "global_time.h"
 #include "nvs_storage.h"
 
-LOG_MODULE_REGISTER(global_time); // init logging
+LOG_MODULE_REGISTER(global_time, LOG_LEVEL_INF); // init logging
 
 // Set time
 uint32_t global_unix_time = 0;
 uint64_t global_unix_time_ms = 0;
 uint32_t global_gps_time = 0;
 uint64_t global_time_update = 0;
+
+/* Serialize the reference, uptime anchor and persistent copy across all readers.
+ *
+ * We couldn't use atomic assignments here because they would still let a reader combine a new
+ * reference with the old uptime anchor, producing an incorrect timestamp. The whole update must be
+ * protected together.
+ */
+K_MUTEX_DEFINE(time_lock);
+static void update_time_locked(void);
 
 /*!
  * @brief Initialize unix time based on stored value.
@@ -28,6 +37,9 @@ uint64_t global_time_update = 0;
  */
 void init_ref_time(void)
 {
+	/* Prevent clock access from interleaving with loading and installing the stored reference.
+	 */
+	k_mutex_lock(&time_lock, K_FOREVER);
 	// Initialize time
 	// Read latest time
 	uint32_t ref_time = 0;
@@ -35,12 +47,12 @@ void init_ref_time(void)
 	LOG_INF("Stored time: %d, settings time: %d", ref_time, Main_settings.init_time->def_val);
 	if (ref_time < Main_settings.init_time->def_val) {
 		ref_time = Main_settings.init_time->def_val;
-		nvs_storage_write(STORAGE_unix_time, &Main_settings.init_time->def_val,
-				  sizeof(Main_settings.init_time->def_val));
 	}
 
 	Main_values.ublox_time->def_val = ref_time;
-	update_time();
+	global_time_update = k_uptime_get();
+	update_time_locked();
+	k_mutex_unlock(&time_lock);
 }
 
 /*!
@@ -50,14 +62,15 @@ void init_ref_time(void)
  */
 void update_ref_time(uint32_t new_time)
 {
-	if (new_time > global_unix_time) {
-		Main_values.ublox_time->def_val = new_time;
-		LOG_INF("Got new reference time: %d", Main_values.ublox_time->def_val);
-		nvs_storage_write(STORAGE_unix_time, &Main_values.ublox_time->def_val,
-				  sizeof(Main_values.ublox_time->def_val));
-		global_time_update = k_uptime_get();
-	}
-	update_time();
+	/* Keep the new reference, its uptime anchor and the persisted time consistent for readers.
+	 */
+	k_mutex_lock(&time_lock, K_FOREVER);
+	/* GPS validation happens before this call. Accept backward corrections too. */
+	Main_values.ublox_time->def_val = new_time;
+	global_time_update = k_uptime_get();
+	update_time_locked();
+	LOG_INF("Updated reference time: %u", new_time);
+	k_mutex_unlock(&time_lock);
 }
 
 /*!
@@ -68,12 +81,13 @@ void update_ref_time(uint32_t new_time)
  */
 void reset_time_from_settings(void)
 {
+	/* Prevent readers or GPS updates from observing a partially reset clock reference. */
+	k_mutex_lock(&time_lock, K_FOREVER);
 	uint32_t ref_time = Main_settings.init_time->def_val;
-	nvs_storage_write(STORAGE_unix_time, &Main_settings.init_time->def_val,
-			  sizeof(Main_settings.init_time->def_val));
 	Main_values.ublox_time->def_val = ref_time;
 	global_time_update = k_uptime_get();
-	update_time();
+	update_time_locked();
+	k_mutex_unlock(&time_lock);
 }
 
 /*!
@@ -83,6 +97,22 @@ void reset_time_from_settings(void)
  * @return /
  */
 void update_time(void)
+{
+	/* Keep the reference stable during calculation and serialize writes to stored time. */
+	k_mutex_lock(&time_lock, K_FOREVER);
+	update_time_locked();
+	k_mutex_unlock(&time_lock);
+}
+
+/**
+ * @brief Refresh application time from its reference and elapsed uptime, then store it.
+ *
+ * Update the Unix seconds, Unix milliseconds and GPS time values together and write
+ * the current Unix seconds to nonvolatile storage.
+ *
+ * @pre The calling thread holds time_lock.
+ */
+static void update_time_locked(void)
 {
 	uint64_t elapsed_ms = (uint64_t)(k_uptime_get() - global_time_update);
 	uint64_t elapsed_sec = elapsed_ms / 1000;
@@ -113,9 +143,12 @@ uint32_t unix_to_gps(uint32_t unix_t)
  */
 uint32_t get_global_unix_time(void)
 {
-	update_time();
-
-	return global_unix_time;
+	/* Refresh and copy the timestamp under one lock so another update cannot replace it. */
+	k_mutex_lock(&time_lock, K_FOREVER);
+	update_time_locked();
+	uint32_t timestamp = global_unix_time;
+	k_mutex_unlock(&time_lock);
+	return timestamp;
 }
 
 /*!
@@ -126,9 +159,12 @@ uint32_t get_global_unix_time(void)
  */
 uint64_t get_unix_time_in_ms(void)
 {
-	update_time();
-
-	return global_unix_time_ms;
+	/* Protect both the refresh and the 64-bit read, which can tear on this 32-bit target. */
+	k_mutex_lock(&time_lock, K_FOREVER);
+	update_time_locked();
+	uint64_t timestamp = global_unix_time_ms;
+	k_mutex_unlock(&time_lock);
+	return timestamp;
 }
 
 /*!
@@ -139,7 +175,10 @@ uint64_t get_unix_time_in_ms(void)
  */
 uint32_t get_global_gps_time(void)
 {
-	update_time();
-
-	return global_gps_time;
+	/* Keep GPS time calculation and the returned snapshot tied to the same reference. */
+	k_mutex_lock(&time_lock, K_FOREVER);
+	update_time_locked();
+	uint32_t timestamp = global_gps_time;
+	k_mutex_unlock(&time_lock);
+	return timestamp;
 }

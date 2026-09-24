@@ -61,6 +61,21 @@ Short message will be sent only if gps fix was successfully obtained.
 User can set sending/storing preferences for both messages in the standard way by setting send via
 LoRaWAN/send via satellite/store to flash settings flags.
 
+## Clock synchronization
+
+UTC time and its validity flags are read from one complete NAV-PVT epoch. Failed reads, consumed or
+old cached epochs, invalid dates, and unqualified fixes cannot update the clock. Time-only fixes are
+supported. The reported time accuracy must be at most one second.
+
+Corrections larger than 30 seconds in either direction require three distinct valid epochs, polled
+at least one second apart during the same GPS attempt. UTC and GPS time-of-week must advance
+consistently with uptime (within 1.5 seconds). This adds roughly two seconds plus polling time when
+confirming a large correction, including the first synchronization after boot if the stored time is
+old. Failed confirmation leaves the clock unchanged. Repeated consistent but incorrect receiver time
+still requires an independent time source to detect.
+
+Validated corrections can move UTC backward as well as forward.
+
 ## Two intervals operation
 
 Two-interval operation is supported. To use 2 intervals functionality, setting:

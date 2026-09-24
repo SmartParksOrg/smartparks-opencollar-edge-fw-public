@@ -9,12 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 #include "generated_settings.h"
-#include "nvs_storage.h"
 
 #include "gps_ublox.h"
 #include "gps_ublox_interface.h"
@@ -23,36 +21,6 @@ LOG_MODULE_REGISTER(gps_ublox_interface, 3); // init logging
 
 SFE_UBLOX_GPS myGPS;   // driver class instance
 uint64_t lastTime = 0; // Simple local timer. Limits amount if I2C traffic to Ublox module.
-
-/* PRIVATE FUNCTIONS */
-// Convert datetime string to unix timestamp (time_t)
-uint32_t gps_ublox_convert_datetime_to_unix(char *timestamp_str)
-{
-	struct tm tm;
-	uint32_t seconds;
-	int r;
-
-	if (timestamp_str == NULL) {
-		LOG_ERR("Null argument");
-		return 0;
-	}
-	r = sscanf(timestamp_str, "%d-%d-%d %d:%d:%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
-		   &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
-	if (r != 6) {
-		LOG_ERR("Expected %d numbers scanned in %s", r, timestamp_str);
-		return 0;
-	}
-
-	tm.tm_year -= 1900;
-	tm.tm_mon -= 1;
-	tm.tm_isdst = 0;
-	seconds = mktime(&tm);
-	if (seconds == (uint32_t)-1) {
-		LOG_ERR("Reading time from %s failed", timestamp_str);
-		return 0;
-	}
-	return seconds;
-}
 
 /**
  * @brief Initialize I2C as Ublox communication device.
@@ -173,45 +141,6 @@ int gps_ublox_get_position(struct gps_ublox_position_data *position)
 	}
 
 	return -EBUSY;
-}
-
-/**
- * @brief Get the datetime object
- *
- * @return unix timestamp
- */
-int gps_ublox_get_datetime(uint32_t *timestamp)
-{
-	int year = myGPS.getYear();
-	int month = myGPS.getMonth();
-	int day = myGPS.getDay();
-	int hour = myGPS.getHour();
-	int minute = myGPS.getMinute();
-	int second = myGPS.getSecond();
-
-	char datetime_str[26];
-	sprintf(datetime_str, "%d-%d-%d %d:%d:%d", year, month, day, hour, minute, second);
-	LOG_INF("DateTime: %s", datetime_str);
-
-	if (myGPS.getTimeValid() == false) {
-		LOG_ERR("Time is not valid");
-		return -EIO;
-	}
-
-	if (myGPS.getDateValid() == false) {
-		LOG_ERR("Date is not valid");
-		return -EIO;
-	}
-
-	if (myGPS.getFullyResolved() == false) {
-		LOG_ERR("GPS is not fully resolved");
-		return -EIO;
-	}
-
-	// unix time return
-	*timestamp = gps_ublox_convert_datetime_to_unix(datetime_str);
-
-	return 0;
 }
 
 /**

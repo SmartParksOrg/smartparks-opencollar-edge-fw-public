@@ -4,6 +4,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [8.0.1] - 2026-09-24
+
+### Fixed
+
+- Validate GPS time from a single fresh NAV-PVT epoch and confirm large corrections with consecutive readings.
+- Allow the application clock to recover from future timestamps and serialize clock reference updates and reads.
+
 ## [8.0.0] - 2026-09-11
 
 ### Added
@@ -725,7 +732,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Remove flash msg length constrain for lr gps messages - we get extra 4 bytes, due to timestamp size
 - Remove Rhinoedge HW 1.4 from the release script.
 
-[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.0...HEAD
+[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.1...HEAD
+[8.0.1]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.0...v8.0.1
 [8.0.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.3.0...v8.0.0
 [7.3.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.2.0...v7.2.0

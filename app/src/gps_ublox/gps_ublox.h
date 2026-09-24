@@ -51,6 +51,16 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 
+/* A single NAV-PVT epoch, including the flags which qualify its UTC time. */
+struct ublox_time_solution {
+	uint16_t year;
+	uint8_t month, day, hour, minute, second;
+	uint8_t valid, fix_type, flags;
+	uint32_t time_accuracy_ns;
+	uint32_t time_of_week_ms;
+	int64_t received_ms;
+};
+
 // The catch-all default is 32
 #define I2C_BUFFER_LENGTH 32
 
@@ -728,6 +738,7 @@ class SFE_UBLOX_GPS
 	bool getDateValid(uint16_t maxWait = getPVTmaxWait);
 	bool getTimeValid(uint16_t maxWait = getPVTmaxWait);
 	bool getFullyResolved(uint16_t maxWait = getPVTmaxWait);
+	bool getTimeSolution(ublox_time_solution *solution, uint16_t maxWait = getPVTmaxWait);
 
 	int32_t getHighResLatitude(uint16_t maxWait = getHPPOSLLHmaxWait);
 	int8_t getHighResLatitudeHp(uint16_t maxWait = getHPPOSLLHmaxWait);
@@ -1056,6 +1067,8 @@ class SFE_UBLOX_GPS
 	} vehAtt;
 
       private:
+	ublox_time_solution timeSolution = {};
+	bool timeSolutionFresh = false;
 	// Depending on the sentence type the processor will load characters into different arrays
 	enum SentenceTypes {
 		NONE = 0,

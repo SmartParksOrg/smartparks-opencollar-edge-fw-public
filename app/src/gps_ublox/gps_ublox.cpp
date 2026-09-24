@@ -45,6 +45,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#define UBLOX_TIME_SOLUTION_MAX_AGE_MS 1500
+
 LOG_MODULE_REGISTER(gps_ublox, 3); // init logging
 
 SFE_UBLOX_GPS::SFE_UBLOX_GPS(void)
@@ -1263,6 +1265,11 @@ void SFE_UBLOX_GPS::processUBXpacket(ubxPacket *msg)
 			gpsTimeValid = (extractByte(11) & 0x02) >> 1;
 			gpsFullyResolved = (extractByte(11) & 0x04) >> 2;
 			gpsNanosecond = extractLong(16); // Includes milliseconds
+			timeSolution = {gpsYear,         gpsMonth,        gpsDay,
+					gpsHour,         gpsMinute,       gpsSecond,
+					extractByte(11), extractByte(20), extractByte(21),
+					extractLong(12), extractLong(0),  k_uptime_get()};
+			timeSolutionFresh = true;
 
 			fixType = extractByte(20 - startingSpot);
 			carrierSolution = extractByte(21 - startingSpot) >>
@@ -1288,6 +1295,7 @@ void SFE_UBLOX_GPS::processUBXpacket(ubxPacket *msg)
 			moduleQueried.gpsSecond = true;
 			moduleQueried.gpsDateValid = true;
 			moduleQueried.gpsTimeValid = true;
+			moduleQueried.gpsFullyResolved = true;
 			moduleQueried.gpsNanosecond = true;
 
 			moduleQueried.all = true;
@@ -3262,6 +3270,40 @@ bool SFE_UBLOX_GPS::getTimeValid(uint16_t maxWait)
 	return (gpsTimeValid);
 }
 
+/**
+ * @brief Get and consume a fresh time snapshot from one complete NAV-PVT epoch.
+ *
+ * Reuse an unread snapshot up to UBLOX_TIME_SOLUTION_MAX_AGE_MS old, otherwise poll for
+ * a new one. Only a complete NAV-PVT packet qualifies; another NAV message reported as
+ * DATA_OVERWRITTEN by getPVT is not sufficient. UTC validity and accuracy checks are
+ * left to the caller.
+ *
+ * @param[out] solution Received snapshot. Unchanged on failure.
+ * @param[in] maxWait Maximum wait for a new packet, in milliseconds.
+ * @retval true A fresh snapshot was copied and marked as consumed.
+ * @retval false solution is null, the poll failed, or no fresh NAV-PVT epoch was received.
+ */
+bool SFE_UBLOX_GPS::getTimeSolution(ublox_time_solution *solution, uint16_t maxWait)
+{
+	if (solution == nullptr) {
+		return false;
+	}
+	if (!timeSolutionFresh ||
+	    k_uptime_get() - timeSolution.received_ms > UBLOX_TIME_SOLUTION_MAX_AGE_MS) {
+		timeSolutionFresh = false;
+		if (!getPVT(maxWait)) {
+			timeSolutionFresh = false;
+			return false;
+		}
+	}
+	if (!timeSolutionFresh) {
+		return false;
+	}
+	*solution = timeSolution;
+	timeSolutionFresh = false;
+	return true;
+}
+
 bool SFE_UBLOX_GPS::getFullyResolved(uint16_t maxWait)
 {
 	if (moduleQueried.gpsFullyResolved == false) {
@@ -3709,6 +3751,7 @@ bool SFE_UBLOX_GPS::getProtocolVersion(uint16_t maxWait)
 // Mark all the PVT data as read/stale. This is handy to get data alignment after CRC failure
 void SFE_UBLOX_GPS::flushPVT()
 {
+	timeSolutionFresh = false;
 	LOG_DBG("Flush PVT called!");
 	// Mark all datums as stale (read before)
 	moduleQueried.gpsiTOW = false;
@@ -3720,6 +3763,7 @@ void SFE_UBLOX_GPS::flushPVT()
 	moduleQueried.gpsSecond = false;
 	moduleQueried.gpsDateValid = false;
 	moduleQueried.gpsTimeValid = false;
+	moduleQueried.gpsFullyResolved = false;
 	moduleQueried.gpsNanosecond = false;
 
 	moduleQueried.all = false;
