@@ -34,19 +34,31 @@ files are created is [described in settings scripts module](../../../scripts/set
 > to lr_gps_interval at 0x01. However the transferred settings still exist at 0x0503 and 0x0500.
 >
 > If the user changes lr_gps_interval to 45 when using the old firmware and also changes some other
-> setting, eg. lr_adr (old ID 0x0E), which is set to eg. 0x08, then performs the DFU upgrade, both
+> setting, eg. lr_adr (old ID 0x0E), which is set to eg. 0x00, then performs the DFU upgrade, both
 > newly saved settings will be transferred. The value 45 at 0x01 will overwrite the previously
 > transferred value 60 at 0x0500, and lr_adr will be transferred to 0x0502. After the new entries
 > are written and verified, the old entries at 0x01 and 0x0E will be deleted.
 >
 > When using the new firmware all existent and transferred settings will load. Meaning the lr_region
 > will still have a value of 0x03, lr_gps_interval will have a value of 45 and lr_adr will have a
-> value of 0x08. The previously transferred lr_region stays unchanged because no new value was saved
+> value of 0x00. The previously transferred lr_region stays unchanged because no new value was saved
 > at its old ID.
 >
 > Settings that already have been transferred will be overwritten by a new transfer respectively.
-> This applies to all non-default settings saved in the old firmware. Any valid entry saved at an
-> old ID will be transferred.
+> Numeric and boolean legacy settings are checked against the current setting's inclusive min/max
+> limits before transfer. Out-of-range values are replaced with the compiled default. Byte arrays
+> are checked for length only; their min/max arrays are not numeric bounds.
+>
+> Legacy IDs `0x38` and `0x60` were reused for unrelated settings in older firmware. Whenever either
+> legacy entry is present, migration writes the compiled default for `ublox_min_satellites_timer` or
+> `external_switch_detection_gpio_pin_power_enabled`, respectively, regardless of the stored value
+> or length. This also replaces an existing destination value. Once the legacy entry has been
+> deleted, later boots preserve any subsequent changes to the destination setting.
+>
+> Replacement defaults are written and verified before deleting the legacy entry. Other legacy
+> entries with incompatible lengths are deleted without changing their destination settings. Storage
+> failures remain errors and leave the legacy entry available for retry. These checks apply to
+> legacy migration; ordinary loading of existing family-based settings is unchanged.
 
 ## User commands instructions
 

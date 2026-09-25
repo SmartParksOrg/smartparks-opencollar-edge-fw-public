@@ -119,11 +119,12 @@ int lorawan_get_max_payload(void);
 /**
  * @brief Get lr11xx chip eui.
  *
- * @param[in] dev_eui buffer to store dev eui
+ * @param[out] dev_eui buffer to store dev eui, unchanged on failure
  *
  * @retval SMTC_MODEM_RC_OK                 Command executed without errors
  * @retval SMTC_MODEM_RC_BUSY               Modem is currently in test mode
  * @retval SMTC_MODEM_RC_INVALID_STACK_ID   Invalid stack_id
+ * @retval SMTC_MODEM_RC_FAIL               Chip EUI read failed or returned all zeros
  */
 int lorawan_get_dev_eui(uint8_t dev_eui[8]);
 

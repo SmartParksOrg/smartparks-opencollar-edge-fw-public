@@ -15,6 +15,7 @@
 #include <smtc_modem_api.h>
 
 #include <smtc_app.h>
+#include <smtc_basic_modem_lr11xx_api_extension.h>
 #include <smtc_modem_api_str.h>
 #include <smtc_modem_hal_init.h>
 
@@ -1374,9 +1375,19 @@ int lorawan_get_max_payload(void)
 
 int lorawan_get_dev_eui(uint8_t dev_eui[8])
 {
-	int err = smtc_modem_get_deveui(STACK_ID, dev_eui);
+	uint8_t chip_eui[8] = {0};
 
-	return err;
+	/* DevEUI uses the chip EUI even when a restored session skips modem configuration. */
+	int err = smtc_modem_get_chip_eui(STACK_ID, chip_eui);
+	if (err) {
+		return err;
+	}
+	if (memcmp(chip_eui, (uint8_t[8]){0}, sizeof(chip_eui)) == 0) {
+		return SMTC_MODEM_RC_FAIL;
+	}
+
+	memcpy(dev_eui, chip_eui, sizeof(chip_eui));
+	return SMTC_MODEM_RC_OK;
 }
 
 void lorawan_get_nwkkey(uint8_t nwkkey[16])

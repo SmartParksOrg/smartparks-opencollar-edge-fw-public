@@ -12,6 +12,7 @@ setting_id_array = []
 setting_family_array = []
 setting_type_array = []
 setting_length_array = []
+setting_default_array = []
 
 # Values array
 value_struct_array = []
@@ -47,6 +48,7 @@ def add_setting_to_array(setting_dict):
     setting_family_array.append(setting_dict["family"])
     setting_type_array.append(setting_dict["conversion"].lower())
     setting_length_array.append(setting_dict["length"])
+    setting_default_array.append(setting_dict["default"])
 
 
 # Store values to arrays - values structs
@@ -344,6 +346,148 @@ def write_function_get_setting_byID():
     h.write("    return 0;\n}\n}\n\n")
 
 
+def write_function_get_setting_default_byID():
+    """Serialize immutable JSON defaults independently of live setting values."""
+    scalar_widths = {
+        "uint8_t": 8,
+        "int8_t": 8,
+        "bool": 8,
+        "uint16_t": 16,
+        "int16_t": 16,
+        "uint32_t": 32,
+        "int32_t": 32,
+    }
+    for width in sorted(
+        {scalar_widths[t] for t in setting_type_array if t in scalar_widths}
+    ):
+        length = str(width // 8)
+        h.write(
+            "static int setting_default_uint"
+            + str(width)
+            + "_to_bytes(uint"
+            + str(width)
+            + "_t value, uint8_t *bytes, uint8_t len){\n"
+        )
+        h.write("if (len != " + length + ") {\n    return 0;\n}\n")
+        if width == 8:
+            h.write("bytes[0] = value;\n")
+        else:
+            h.write("sys_put_le" + str(width) + "(value, bytes);\n")
+        h.write("return " + length + ";\n}\n\n")
+
+    h.write(
+        "int get_setting_default_by_id(uint8_t family, uint8_t id, uint8_t *bytes, "
+        "uint8_t len){\n"
+    )
+    h.write("if (bytes == NULL) {\n    return 0;\n}\n")
+    h.write("switch(MAKE_KEY(family, id)) {\n")
+    for myid, myfam, val_type, mylen, default in zip(
+        setting_id_array,
+        setting_family_array,
+        setting_type_array,
+        setting_length_array,
+        setting_default_array,
+    ):
+        h.write("case MAKE_KEY(" + myfam + ", " + myid + "):")
+        if val_type in scalar_widths:
+            width = str(scalar_widths[val_type])
+            h.write(
+                "\n    return setting_default_uint"
+                + width
+                + "_to_bytes((uint"
+                + width
+                + "_t)("
+                + default
+                + "), bytes, len);\n"
+            )
+            continue
+        h.write(" {\n")
+        h.write("    if (len != " + mylen + ") {\n        return 0;\n    }\n")
+        if val_type == "byte_array":
+            h.write(
+                "    static const uint8_t default_value["
+                + mylen
+                + "] = "
+                + default
+                + ";\n"
+            )
+            h.write("    memcpy(bytes, default_value, sizeof(default_value));\n")
+        elif val_type == "float":
+            h.write("    static const int16_t default_value[2] = " + default + ";\n")
+            h.write("    sys_put_le16((uint16_t)default_value[0], bytes);\n")
+            h.write("    sys_put_le16((uint16_t)default_value[1], bytes + 2);\n")
+        h.write("    return " + mylen + ";\n}\n")
+    h.write("default:\n")
+    h.write("    return 0;\n}\n}\n\n")
+
+
+def write_function_setting_value_in_range():
+    """Validate serialized scalar ranges without changing the live settings."""
+    decoders = {
+        "uint8_t": "data[0]",
+        "uint16_t": "sys_get_le16(data)",
+        "uint32_t": "sys_get_le32(data)",
+        "int8_t": "(int8_t)data[0]",
+        "int16_t": "(int16_t)sys_get_le16(data)",
+        "int32_t": "(int32_t)sys_get_le32(data)",
+        # Keep the raw byte so that an invalid bool (e.g. 2) is not coerced to true.
+        "bool": "data[0]",
+        # FLOAT is a pair of signed int16 whole/fraction parts, with 4 decimals.
+        "float": "(int16_t)sys_get_le16(data) * 10000 + "
+        "(int16_t)sys_get_le16(data + 2)",
+    }
+    for val_type in dict.fromkeys(setting_type_array):
+        if val_type == "byte_array":
+            continue
+        index = setting_type_array.index(val_type)
+        h.write(
+            "static bool setting_"
+            + val_type
+            + "_in_range(const "
+            + setting_struct_array[index]
+            + " *setting, uint8_t *data, uint8_t len){\n"
+        )
+        h.write(
+            "if (len != " + setting_length_array[index] + ") {\n    return false;\n}\n"
+        )
+        c_type = {"bool": "uint8_t", "float": "int32_t"}.get(val_type, val_type)
+        h.write(c_type + " value = " + decoders[val_type] + ";\n")
+        minimum = "setting->min"
+        maximum = "setting->max"
+        if val_type == "float":
+            minimum = "(" + minimum + "[0] * 10000 + " + minimum + "[1])"
+            maximum = "(" + maximum + "[0] * 10000 + " + maximum + "[1])"
+        h.write("return value >= " + minimum + " && value <= " + maximum + ";\n}\n\n")
+
+    h.write(
+        "bool setting_value_in_range(uint8_t family, uint8_t id, uint8_t *data, "
+        "uint8_t len){\n"
+    )
+    h.write("if (data == NULL) {\n    return false;\n}\n")
+    h.write("switch(MAKE_KEY(family, id)) {\n")
+    for name, myid, myfam, val_type, mylen in zip(
+        setting_name_array,
+        setting_id_array,
+        setting_family_array,
+        setting_type_array,
+        setting_length_array,
+    ):
+        h.write("case MAKE_KEY(" + myfam + ", " + myid + "):\n")
+        if val_type == "byte_array":
+            # Array/string min and max fields are placeholders, not numeric bounds.
+            h.write("    return len == " + mylen + ";\n")
+        else:
+            h.write(
+                "    return setting_"
+                + val_type
+                + "_in_range(Main_settings."
+                + name
+                + ", data, len);\n"
+            )
+    h.write("default:\n")
+    h.write("    return false;\n}\n}\n\n")
+
+
 def write_function_get_value_struct_byID():
     """Write the generated helper that returns a value struct by ID."""
     # Function get setting by id
@@ -514,7 +658,9 @@ if json_data:
         # Head
         h.write("/* AUTOGENERATED FILE - DO NOT MODIFY! */\n")
         h.write('#include "settings_def.h"\n')
-        h.write("#include <stdio.h>\n\n")
+        h.write("#include <stdio.h>\n")
+        h.write("#include <string.h>\n")
+        h.write("#include <zephyr/sys/byteorder.h>\n\n")
 
         h.write("#define MAKE_KEY(family, id) (((family) << 8) | (id))\n")
 
@@ -530,14 +676,16 @@ if json_data:
                     print("Error in field " + setting_name + "!")
                     continue
 
-                write_setting(setting_name, setting_dict)
                 add_setting_to_array(setting_dict)
+                write_setting(setting_name, setting_dict)
 
         # Generate main setting structure
         write_setting_struct()
         # Generate functions
         write_function_get_setting_struct_byID()
         write_function_get_setting_byID()
+        write_function_get_setting_default_byID()
+        write_function_setting_value_in_range()
         write_function_set_setting_value_byID()
 
     # Header file
@@ -550,6 +698,37 @@ if json_data:
         h.write("extern main_settings Main_settings;\n")
         h.write("int get_setting_by_id(uint8_t family, uint8_t id, uint8_t *data);\n")
         h.write("void *get_setting_struct_by_id(uint8_t family, uint8_t id);\n\n")
+        h.write(
+            "/**\n"
+            " * @brief Serialize the compiled default without reading mutable live values.\n"
+            " *\n"
+            " * @param family Setting family.\n"
+            " * @param id Setting ID within the family.\n"
+            " * @param bytes Output buffer with capacity for len bytes.\n"
+            " * @param len Must equal the setting's declared length.\n"
+            " * @return Number of bytes written, or 0 for an unknown setting, NULL buffer,\n"
+            " *         or length mismatch. On failure, the buffer is unchanged.\n"
+            " */\n"
+            "int get_setting_default_by_id(uint8_t family, uint8_t id, uint8_t *bytes, "
+            "uint8_t len);\n\n"
+            "/**\n"
+            " * @brief Check serialized values against inclusive setting min/max limits.\n"
+            " *\n"
+            " * Numeric values use their signedness and little-endian wire encoding.\n"
+            " * Boolean bytes are checked before conversion to bool. Byte arrays and\n"
+            " * strings require only their exact declared length; their placeholder\n"
+            " * min/max arrays are not numeric bounds. Does not change live settings.\n"
+            " *\n"
+            " * @param family Setting family.\n"
+            " * @param id Setting ID within the family.\n"
+            " * @param data Serialized setting value.\n"
+            " * @param len Number of bytes in data.\n"
+            " * @return true if the value passes; false for an unknown setting, NULL\n"
+            " *         buffer, length mismatch, or out-of-range scalar value.\n"
+            " */\n"
+            "bool setting_value_in_range(uint8_t family, uint8_t id, uint8_t *data, "
+            "uint8_t len);\n\n"
+        )
         h.write(
             "int set_setting_value_by_id(uint8_t family, uint8_t id, uint8_t *data, uint8_t len);\n\n"
         )

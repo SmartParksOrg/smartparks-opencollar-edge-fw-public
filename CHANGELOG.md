@@ -4,6 +4,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [8.0.2] - 2026-09-25
+
+### Fixed
+
+- Fix `device_eui` being overwritten with zeros after restoring a LoRaWAN session by reading the chip EUI and preserving the stored value on invalid reads.
+- Fix settings migration failing on legacy settings with incompatible lengths by deleting those entries and continuing migration, preventing repeated failures on subsequent boots.
+- Validate legacy numeric and boolean settings against current min/max limits during migration and replace out-of-range values with compiled defaults.
+- Reset the GPS minimum-satellites timer and external-switch power setting to compiled defaults when migrating reused legacy IDs `0x38` and `0x60`, even when stored values appear valid.
+
 ## [8.0.1] - 2026-09-24
 
 ### Fixed
@@ -732,7 +741,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Remove flash msg length constrain for lr gps messages - we get extra 4 bytes, due to timestamp size
 - Remove Rhinoedge HW 1.4 from the release script.
 
-[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.1...HEAD
+[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.2...HEAD
+[8.0.2]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.1...v8.0.2
 [8.0.1]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.0...v8.0.1
 [8.0.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.3.0...v8.0.0
 [7.3.0]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v7.2.0...v7.3.0

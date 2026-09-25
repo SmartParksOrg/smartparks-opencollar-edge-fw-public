@@ -143,6 +143,35 @@ extern main_settings Main_settings;
 int get_setting_by_id(uint8_t family, uint8_t id, uint8_t *data);
 void *get_setting_struct_by_id(uint8_t family, uint8_t id);
 
+/**
+ * @brief Serialize the compiled default without reading mutable live values.
+ *
+ * @param family Setting family.
+ * @param id Setting ID within the family.
+ * @param bytes Output buffer with capacity for len bytes.
+ * @param len Must equal the setting's declared length.
+ * @return Number of bytes written, or 0 for an unknown setting, NULL buffer,
+ *         or length mismatch. On failure, the buffer is unchanged.
+ */
+int get_setting_default_by_id(uint8_t family, uint8_t id, uint8_t *bytes, uint8_t len);
+
+/**
+ * @brief Check serialized values against inclusive setting min/max limits.
+ *
+ * Numeric values use their signedness and little-endian wire encoding.
+ * Boolean bytes are checked before conversion to bool. Byte arrays and
+ * strings require only their exact declared length; their placeholder
+ * min/max arrays are not numeric bounds. Does not change live settings.
+ *
+ * @param family Setting family.
+ * @param id Setting ID within the family.
+ * @param data Serialized setting value.
+ * @param len Number of bytes in data.
+ * @return true if the value passes; false for an unknown setting, NULL
+ *         buffer, length mismatch, or out-of-range scalar value.
+ */
+bool setting_value_in_range(uint8_t family, uint8_t id, uint8_t *data, uint8_t len);
+
 int set_setting_value_by_id(uint8_t family, uint8_t id, uint8_t *data, uint8_t len);
 
 #endif

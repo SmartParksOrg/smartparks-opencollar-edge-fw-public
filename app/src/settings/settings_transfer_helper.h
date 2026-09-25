@@ -17,13 +17,19 @@ extern "C" {
 /**
  * @brief Transfers legacy user settings to the family-based settings structure.
  *
- * A legacy entry is deleted only after its new entry has been written and verified. Runtime-value
- * mappings are retained for documentation but are not transferred because values were not persisted
- * under their protocol IDs.
+ * Numeric and boolean legacy values must satisfy the destination setting's min/max limits.
+ * Out-of-range values are replaced with the compiled default. Legacy IDs 0x38 and 0x60 were reused
+ * for unrelated settings and are always replaced with the compiled default when present, even if
+ * their length or value would otherwise be accepted. Byte arrays are checked for length only.
  *
- * @retval 0 One or more legacy settings were transferred successfully.
+ * Transferred values and replacement defaults are written and verified before deleting the
+ * legacy entry. Other entries with incompatible lengths are discarded without changing their
+ * destinations. Once a legacy entry is deleted, later boots leave its destination unchanged.
+ * Runtime-value mappings are not processed because values were not persisted at their protocol IDs.
+ *
+ * @retval 0 One or more legacy settings were transferred, defaulted, or discarded with no failures.
  * @retval -EALREADY No legacy settings were present.
- * @return A different negative error code if one or more entries failed to transfer.
+ * @return A different negative error code if one or more entries could not be migrated or deleted.
  */
 int settings_transfer(void);
 

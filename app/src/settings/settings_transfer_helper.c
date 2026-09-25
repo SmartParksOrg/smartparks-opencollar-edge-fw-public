@@ -8,6 +8,7 @@
  */
 
 #include "nvs_storage.h"
+#include "settings_def.h"
 #include "zephyr/fs/nvs.h"
 #include <settings_transfer_helper.h>
 
@@ -304,10 +305,12 @@ int settings_transfer(void)
 	int transfer_err = 0;
 	size_t found = 0;
 	size_t transferred = 0;
+	size_t defaulted = 0;
+	size_t discarded = 0;
 	size_t failed = 0;
 
-	/* Family 0x00 is permanently reserved for legacy settings. The presence of a valid entry
-	 * means that it still needs to be transferred. */
+	/* Family 0x00 is permanently reserved for legacy settings. Remaining entries need to be
+	 * transferred, reset to defaults, or discarded if their stored length is incompatible. */
 	for (size_t i = 0; i < ARRAY_SIZE(legacy_map); i++) {
 		const struct setting_transfer_item item = legacy_map[i];
 
@@ -321,9 +324,36 @@ int settings_transfer(void)
 		uint16_t new_key = MAKE_SETTING_KEY(item.new_family, item.new_id);
 		int err = nvs_read(nvs_fs, old_key, value, item.len);
 
-		if (err == item.len) {
+		/* These IDs previously meant rf_scan_enabled and satellite_min_signal_strength.
+		 * Their bytes cannot identify which setting was saved, even with valid ranges. */
+		bool reused_id = item.old_id == 0x38 || item.old_id == 0x60;
+
+		if (err == item.len || (err >= 0 && reused_id)) {
 			found++;
 			LOG_DBG("Found legacy setting 0x%04x", old_key);
+
+			bool use_default =
+				reused_id || !setting_value_in_range(item.new_family, item.new_id,
+								     value, item.len);
+			if (use_default) {
+				/* Defaults must come from the compiled definitions, not mutable RAM
+				 * values or an existing destination left by an earlier migration.
+				 */
+				err = get_setting_default_by_id(item.new_family, item.new_id, value,
+								item.len);
+				if (err != item.len) {
+					LOG_ERR("Failed to get default for legacy setting 0x%04x "
+						"(length: %d, expected: %d)",
+						old_key, err, item.len);
+					failed++;
+					if (transfer_err == 0) {
+						transfer_err = -EINVAL;
+					}
+					continue;
+				}
+				LOG_WRN("Resetting legacy setting 0x%04x to default: %s", old_key,
+					reused_id ? "reused ID" : "value outside limits");
+			}
 
 			/* Persist and verify the new entry before deleting the only legacy copy. */
 			err = nvs_write(nvs_fs, new_key, value, item.len);
@@ -361,17 +391,33 @@ int settings_transfer(void)
 				continue;
 			}
 
-			transferred++;
-			LOG_DBG("Transferred legacy setting 0x%04x to 0x%04x", old_key, new_key);
+			if (use_default) {
+				defaulted++;
+			} else {
+				transferred++;
+			}
+			LOG_DBG("Migrated legacy setting 0x%04x to 0x%04x", old_key, new_key);
 		} else if (err == -ENOENT) {
 			LOG_DBG("No legacy entry found for setting 0x%04x", old_key);
 		} else if (err >= 0) {
-			LOG_ERR("Legacy setting 0x%04x has invalid length %d (expected %d)",
+			found++;
+			LOG_WRN("Discarding legacy setting 0x%04x with length %d (expected %d)",
 				old_key, err, item.len);
-			failed++;
-			if (transfer_err == 0) {
-				transfer_err = -EMSGSIZE;
+
+			/* Remove incompatible entries so they are not retried on every boot. */
+			err = nvs_delete(nvs_fs, old_key);
+			if (err != 0) {
+				LOG_ERR("Failed to delete incompatible legacy setting 0x%04x "
+					"(err: %d)",
+					old_key, err);
+				failed++;
+				if (transfer_err == 0) {
+					transfer_err = err;
+				}
+				continue;
 			}
+
+			discarded++;
 		} else {
 			LOG_ERR("Failed to read legacy setting 0x%04x (err: %d)", old_key, err);
 			failed++;
@@ -381,8 +427,10 @@ int settings_transfer(void)
 		}
 	}
 
-	LOG_DBG("Legacy settings scan: found=%u transferred=%u failed=%u", (unsigned int)found,
-		(unsigned int)transferred, (unsigned int)failed);
+	LOG_DBG("Legacy settings scan: found=%u transferred=%u defaulted=%u discarded=%u "
+		"failed=%u",
+		(unsigned int)found, (unsigned int)transferred, (unsigned int)defaulted,
+		(unsigned int)discarded, (unsigned int)failed);
 
 	if (transfer_err != 0) {
 		return transfer_err;
