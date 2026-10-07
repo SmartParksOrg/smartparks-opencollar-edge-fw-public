@@ -634,6 +634,9 @@ int gps_reset(void)
 
 void gps_reset_fix_state(void)
 {
+	if (prv_ctx.retry_exhausted && prv_ctx.enabled) {
+		sys_err.ublox = 0;
+	}
 	prv_ctx.cold_fix = false;
 	prv_ctx.hot_fix = false;
 	prv_ctx.cold_retry = 0;
@@ -837,6 +840,7 @@ int gps_get_fix(void)
 				 */
 				if (prv_ctx.cold_retry > Main_settings.cold_fix_retry->def_val) {
 					prv_ctx.retry_exhausted = true;
+					sys_err.ublox = -EIO;
 				}
 			} else {
 				/* Clear buffer and flush data */
@@ -897,6 +901,9 @@ int gps_get_fix(void)
 
 	/* Update ublox fix status */
 	if (prv_ctx.last_fix_success) {
+		if (prv_ctx.retry_exhausted) {
+			sys_err.ublox = 0;
+		}
 		prv_ctx.send_interval = prv_ctx.default_send_interval;
 		prv_ctx.retry_exhausted = false;
 		sys_err.ublox_fix = 0;

@@ -32,6 +32,7 @@ int gps_reset(void);
  * @brief Restart the GPS fix acquisition state machine.
  *
  * Clear the hot/cold fix state, retry counters and fix error without resetting the Ublox module.
+ * Clear the retry-exhaustion Ublox error if the receiver is still enabled.
  * This is intended for explicitly requested fixes after the automatic retry limit was reached.
  */
 void gps_reset_fix_state(void);
