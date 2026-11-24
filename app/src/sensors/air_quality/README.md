@@ -3,8 +3,10 @@
 This module is used for performing air quality measurements. It combines the use of BME690 and
 BMV080 sensors.
 
-> [!IMPORTANT] This module is available only for `rangeredge` boards, for which a special firmware
-> type needs to be used.
+> [!IMPORTANT]
+>
+> This module is available only for `rangeredge` boards, for which a special firmware type needs to
+> be used.
 >
 > To use this feature, flash the device (or perform a DFU) of the device. The files for that can be
 > found on our

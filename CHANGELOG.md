@@ -4,6 +4,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [8.0.4] - 2026-11-24
+
+### Fixed
+
+- Fix motion-triggered GPS skipping 4 of every 5 fixes from about 20.8 days after boot, regardless of motion.
+
 ## [8.0.3] - 2026-10-07
 
 ### Fixed
@@ -747,7 +753,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Remove flash msg length constrain for lr gps messages - we get extra 4 bytes, due to timestamp size
 - Remove Rhinoedge HW 1.4 from the release script.
 
-[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.3...HEAD
+[unreleased]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.4...HEAD
+[8.0.4]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.3...v8.0.4
 [8.0.3]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.2...v8.0.3
 [8.0.2]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.1...v8.0.2
 [8.0.1]: https://github.com/SmartParksOrg/smartparks-opencollar-edge-fw/compare/v8.0.0...v8.0.1

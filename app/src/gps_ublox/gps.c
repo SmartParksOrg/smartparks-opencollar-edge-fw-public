@@ -14,6 +14,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/pm/device.h>
+#include <zephyr/sys/atomic.h>
 #include <zephyr/types.h>
 
 #include "generated_settings.h"
@@ -73,6 +74,13 @@ LOG_MODULE_REGISTER(gps, 3); // init logging
 static uint32_t prv_gps_motion_event_timestamps[GPS_MOTION_DETECTION_MAX_NUMBER_OF_EVENTS] = {0};
 static int prv_gps_motion_event_timestamp_idx = 0;
 static bool prv_gps_motion_get_fix = false;
+
+/**
+ * @brief Uptime in seconds of the latest motion event, or 0 if there was none since boot.
+ *
+ * Uptime never jumps, unlike Unix time, so clock corrections cannot hide or fake recent motion.
+ */
+static atomic_t prv_last_motion_uptime_s;
 
 static uint64_t prv_time_of_last_check_min_number_of_satellites = 0;
 
@@ -1033,24 +1041,24 @@ bool gps_send_interval(void)
 				prv_ctx.skipped_attempts = 0;
 				return true;
 			}
-			/* Check if motion was detected recently */
-			if (k_uptime_get() - Main_values.last_accel_int_time->def_val <
-			    prv_ctx.send_interval) {
-				LOG_INF("Last motion trigger: %d s ago. "
+			/* Check if motion was detected since the last attempt. Take the decision
+			 * time first, so motion recorded during this check counts in the next
+			 * cycle. */
+			int64_t now_ms = k_uptime_get();
+			uint32_t last_motion_s = (uint32_t)atomic_get(&prv_last_motion_uptime_s);
+
+			if (last_motion_s >= (uint32_t)(prv_ctx.last_fix_try / 1000)) {
+				LOG_INF("Last motion trigger: %u s ago. "
 					"Get position!",
-					(uint32_t)(get_global_unix_time() -
-						   Main_values.last_accel_int_time->def_val) /
-						1000);
+					(uint32_t)(k_uptime_get() / 1000) - last_motion_s);
 				prv_ctx.skipped_attempts = 0;
 				return true;
 			} else {
-				LOG_INF("Last motion trigger: %d s ago. "
+				LOG_INF("Last motion trigger: %u s ago. "
 					"Skip fix!",
-					(uint32_t)(k_uptime_get() -
-						   Main_values.last_accel_int_time->def_val) /
-						1000);
+					(uint32_t)(k_uptime_get() / 1000) - last_motion_s);
 				prv_ctx.skipped_attempts++;
-				prv_ctx.last_fix_try = k_uptime_get();
+				prv_ctx.last_fix_try = now_ms;
 				return false;
 			}
 		}
@@ -1064,6 +1072,9 @@ bool gps_send_interval(void)
 
 void gps_motion_triggered_event_handler(void)
 {
+	/* Record every motion event for the motion-triggered skip-fix check */
+	atomic_set(&prv_last_motion_uptime_s, (atomic_val_t)(k_uptime_get() / 1000));
+
 	/* Check if enabled */
 	if (Main_settings.enable_motion_trig_gps->def_val == false ||
 	    Main_settings.gps_motion_triggered_min_num_of_triggers_per_interval->def_val == 0 ||

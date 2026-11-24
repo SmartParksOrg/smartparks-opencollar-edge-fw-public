@@ -78,13 +78,17 @@ Select the feature you'd like to use by enabling one of the following settings:
 }
 ```
 
-> [!IMPORTANT] Because both features use the same port, enabling both Fence and SWITCH
-> functionalities at the same time will enable the Fence feature and disable the SWITCH feature, as
-> both can not operate concurrently.
+> [!IMPORTANT]
+>
+> Because both features use the same port, enabling both Fence and SWITCH functionalities at the
+> same time will enable the Fence feature and disable the SWITCH feature, as both can not operate
+> concurrently.
 
 <!-- -->
 
-> [!NOTE]REMINDER Settings can be set by sending a message to a device on port 3. Example:
+> [!NOTE]
+>
+> REMINDER Settings can be set by sending a message to a device on port 3. Example:
 >
 > ```txt
 > 0x08 0x01 0x01 0x01

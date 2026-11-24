@@ -5,8 +5,10 @@
 This sample focuses on bluetooth scanning, matching and displaying data from the provided bluetooth
 mac address.
 
-> [!IMPORTANT] This sample shows a use-case for scanning and displaying data from the Elephant BLE
-> sub-skin implant. If you're not using the sample for this use-case, you need to change the
+> [!IMPORTANT]
+>
+> This sample shows a use-case for scanning and displaying data from the Elephant BLE sub-skin
+> implant. If you're not using the sample for this use-case, you need to change the
 > `process_scan_data` function to suit the data format of your bluetooth advertiser. With the
 > Elephant implant, the device advertises data in bursts of 8 packets every 3 minutes. More
 > information about the Elephant BLE sub-skin implant can be found

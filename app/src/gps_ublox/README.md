@@ -88,7 +88,9 @@ from 0 to 23, representing UTC time hours. Using these settings, the intervals a
 `interval1: [ublox_interval1_start, ublox_interval2_start)` and
 `interval2: [ublox_interval2_start, ublox_interval1_start)`.
 
-> [!NOTE] Setting both intervals to the same hour will result in the selection of `interval1`.
+> [!NOTE]
+>
+> Setting both intervals to the same hour will result in the selection of `interval1`.
 
 ### Example
 
@@ -222,9 +224,10 @@ device obtaining a fix and resetting the internal skip-counter.
 
 ### 2. Motion triggered GPS in specified time window
 
-> [!NOTE] This motion trigger functionality can be used by itself and in congruence with other GPS
-> features (except for #1 Skip GPS fix), as it does not rely on the standard ublox send/fix
-> intervals.
+> [!NOTE]
+>
+> This motion trigger functionality can be used by itself and in congruence with other GPS features
+> (except for #1 Skip GPS fix), as it does not rely on the standard ublox send/fix intervals.
 
 Each motion trigger event temporarily increases the internal motion trigger counter for a (user
 defined, in seconds) `gps_triggered_interval` duration. When the internal trigger counter is equal

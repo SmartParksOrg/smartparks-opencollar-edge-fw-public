@@ -30,7 +30,7 @@ struct setting_transfer_item {
 };
 
 /* Structure containing the mapping of old settings to new settings (from version v7.3.0 to
- * v7.4.0) */
+ * v8.0.0) */
 static const struct setting_transfer_item legacy_map[] = {
 	{.old_id = 0x00, .len = 1, .new_id = 0x00, .new_family = 0x02}, /* tracker_type */
 	{.old_id = 0x01, .len = 4, .new_id = 0x00, .new_family = 0x05}, /* lr_gps_interval */

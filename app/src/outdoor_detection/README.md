@@ -58,8 +58,10 @@ final outdoor probability. The Parameters are set as follows:
 - Hour weight (2 bytes)
 - Time-zone offset in seconds (4 bytes) - Default offset is set to Central Africa time (GMT+2)
 
-> [!IMPORTANT] All weights need to be little endian encoded integers! All values should be
-> multiplied by 1000 prior to saving.
+> [!IMPORTANT]
+>
+> All weights need to be little endian encoded integers! All values should be multiplied by 1000
+> prior to saving.
 
 ### Configuration example
 

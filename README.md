@@ -100,8 +100,10 @@ Prior to build, configure desired settings:
 east build -b <board>@<revision_group>
 ```
 
-> [!NOTE] When building, instead of providing the hardware revision marked on the board, use the
-> revision group as marked below. In case of doubt check the provided example.
+> [!NOTE]
+>
+> When building, instead of providing the hardware revision marked on the board, use the revision
+> group as marked below. In case of doubt check the provided example.
 
 #### Supported HW boards and their FW revisions
 
@@ -127,9 +129,11 @@ east build -b <board>@<revision_group>
 | `rhinopuck35_nrf52840` | `1.2.0`                             | `1.2.0`                 |
 |                        |                                     |                         |
 
-> [!NOTE] There are also special firmware types that add support for special functionalities that
-> are not available in the firmware by default. More information regarding special firmware types
-> can be found below.
+> [!NOTE]
+>
+> There are also special firmware types that add support for special functionalities that are not
+> available in the firmware by default. More information regarding special firmware types can be
+> found below.
 
 ##### Example
 

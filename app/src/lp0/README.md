@@ -44,17 +44,21 @@ which consists of a message on port 33 which the offloading station detects and 
 acknowledge message. Upon a successfully received acknowledge response the device starts
 transmitting all flash logs to the offload station.
 
-> [!CAUTION] This feature is still experimental, so before enabling it make sure you have a way to
-> manually reboot the device in case of potential errors. Connecting to the offloading device is via
+> [!CAUTION]
+>
+> This feature is still experimental, so before enabling it make sure you have a way to manually
+> reboot the device in case of potential errors. Connecting to the offloading device is via
 > Bluetooth is permitted (only offloading devices, not offload stations).
 >
 > This feature dramatically increases power consumption.
 
 <!-- -->
 
-> [!NOTE] TODO-FUTURE: Currently the device continuously transmits all messages, and upon completion
-> starts with a new ping which starts a new offload. In the future we will add message confirmation
-> logic, which will detect the sent messages and mark sent messages so they're sent only once.
+> [!NOTE]
+>
+> TODO-FUTURE: Currently the device continuously transmits all messages, and upon completion starts
+> with a new ping which starts a new offload. In the future we will add message confirmation logic,
+> which will detect the sent messages and mark sent messages so they're sent only once.
 >
 > Before the above mentioned message confirmation logic is added the full offload time can cause a
 > lorawan engine error on LP1, which can cause a device reboot after offload completes and normal
@@ -71,10 +75,12 @@ On each successful ping, the device sends an instruction to the SDFS module to c
 the SD card to house the newly received messages and avoid file overflow. If the SDFS module is not
 connected, the device listens to the messages but does nothing with them.
 
-> [!CAUTION] This feature is still experimental, so before enabling it make sure you have a way to
-> manually reboot the device in case of potential errors. Connecting to the device via Bluetooth
-> while the device is performing the continuous RX for detection offloading device pings has the
-> potential to stall the device. In such cases a manual reboot is needed to reboot the device.
+> [!CAUTION]
+>
+> This feature is still experimental, so before enabling it make sure you have a way to manually
+> reboot the device in case of potential errors. Connecting to the device via Bluetooth while the
+> device is performing the continuous RX for detection offloading device pings has the potential to
+> stall the device. In such cases a manual reboot is needed to reboot the device.
 >
 > This feature dramatically increases power consumption.
 

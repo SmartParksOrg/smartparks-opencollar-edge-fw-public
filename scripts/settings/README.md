@@ -2,11 +2,13 @@
 
 Module for auto-generating settings files from a JSON structure.
 
-> [!IMPORTANT] When upgrading from versions `v7.3.0` and older to `v7.4.0` and newer, a settings
-> transfer is performed. The firmware automatically detects the presence of old settings and
-> transfers them into the new settings structure. Afterwards it clears the flash space where old
-> settings were saved in an effort to avoid the accidental use of stale settings, so downgrading
-> from `v7.4.0` will effectively set all settings back to their default values.
+> [!IMPORTANT]
+>
+> When upgrading from versions `v7.3.0` and older to `v8.0.0` and newer, a settings transfer is
+> performed. The firmware automatically detects the presence of old settings and transfers them into
+> the new settings structure. Afterwards it clears the flash space where old settings were saved in
+> an effort to avoid the accidental use of stale settings, so downgrading from `v8.0.0` will
+> effectively set all settings back to their default values.
 
 ## settings.json
 
@@ -37,7 +39,7 @@ The currently defined families are:
 
 | Name               | ID     | Current entries       | Used for                                                                                                                                                                                        |
 | ------------------ | ------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `old`              | `0x00` | No current settings   | Permanently reserved for legacy settings from firmware before v7.4.0. This family must never be reused; it is scanned while migrating settings from the old, single-ID namespace.               |
+| `old`              | `0x00` | No current settings   | Permanently reserved for legacy settings from firmware before v8.0.0. This family must never be reused; it is scanned while migrating settings from the old, single-ID namespace.               |
 | `reserved_special` | `0x01` | Internal records only | Protected firmware storage such as time and position state, flash bookkeeping, and the LoRaWAN context. This family must not be used for entries in `settings.json`.                            |
 | `general`          | `0x02` | 13 settings           | Device-wide behavior and identity, including tracker type, status and diagnostic intervals, logging, Wi-Fi scan scheduling, device name/PIN, and LED control.                                   |
 | `flags`            | `0x03` | 3 settings            | Bit fields that select which data is sent over long-range radio, stored in flash, or sent over satellite.                                                                                       |

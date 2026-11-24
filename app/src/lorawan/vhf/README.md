@@ -66,8 +66,10 @@ packet is sent per burst.**
 By default, VHF transmission is done using the on-board LoRaWAN antenna. Enabling the external path,
 the board will send the VHF transmission over the external VHF antenna connector.
 
-> [!IMPORTANT] This setting is applicable only for non-rhino\* boards as rhino\* boards do not have
-> the appropriate VHF connector. Enabling this setting while using a rhino\* board will produce no
+> [!IMPORTANT]
+>
+> This setting is applicable only for non-rhino\* boards as rhino\* boards do not have the
+> appropriate VHF connector. Enabling this setting while using a rhino\* board will produce no
 > change in operation.
 >
 > Affected Rhino\* board types:
@@ -135,7 +137,7 @@ from 0 to 23, representing UTC time hours. Using these settings, the intervals a
 `interval1: [vhf_interval1_start, vhf_interval2_start)` and
 `interval2: [vhf_interval2_start, vhf_interval1_start)`.
 
-> [!NOTE]Notes
+> [!NOTE]
 >
 > - Setting both intervals to the same hour will result in the selection of `interval1`.
 > - Setting `interval1` or `interval2` to 0 will turn off the feature for that interval

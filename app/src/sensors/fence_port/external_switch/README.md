@@ -124,8 +124,10 @@ External SWITCH detection uses the following user settings:
 
 Turns on external switch detection.
 
-> [!IMPORTANT] This setting must not be enabled concurrently with the `fence_enabled`! If both are
-> enabled, the firmware will automatically disable the external switch functionality.
+> [!IMPORTANT]
+>
+> This setting must not be enabled concurrently with the `fence_enabled`! If both are enabled, the
+> firmware will automatically disable the external switch functionality.
 
 ```json
 "external_switch_detection_enabled": {
@@ -168,15 +170,19 @@ Available settings:
 Debouncing controls how many milliseconds after detecting the `AN` (GPIO input) line changing state
 the device ignores additional input state changes.
 
-> [!NOTE]Activity detection specific After the debouncing period expires, the device will read the
-> state of the `AN` (GPIO input) line again, confirming that the state is correctly set. This is
-> done to fix the issue where the input line changed state prior to the debouncing duration
-> expiring, resulting in the device reporting activity incorrectly.
+> [!NOTE]
+>
+> Activity detection specific After the debouncing period expires, the device will read the state of
+> the `AN` (GPIO input) line again, confirming that the state is correctly set. This is done to fix
+> the issue where the input line changed state prior to the debouncing duration expiring, resulting
+> in the device reporting activity incorrectly.
 
 <!-- -->
 
-> [!WARNING] Setting debouncing to 0 will turn `OFF` the debouncing logic, which can slow down the
-> device and potentially make it unusable, if the input GPIO pin is floating or in a pull mismatch.
+> [!WARNING]
+>
+> Setting debouncing to 0 will turn `OFF` the debouncing logic, which can slow down the device and
+> potentially make it unusable, if the input GPIO pin is floating or in a pull mismatch.
 
 ```json
 "external_switch_detection_trigger_debounce_ms": {
@@ -194,7 +200,9 @@ the device ignores additional input state changes.
 
 Reporting interval at which a report is sent over LoRa. Setting the interval to 0 will disable it.
 
-> [!IMPORTANT]Activity detection specific
+> [!IMPORTANT]
+>
+> Activity detection specific
 >
 > This setting only controls the periodic status reporting. When activity was detected after a
 > period of inactivity (or when going from a period of activity to inactivity), the device will
@@ -257,8 +265,10 @@ Set this pull of the `AN` (GPIO input) line for more accurate activity and count
 | 1   | Pull Up     |
 | 2   | Pull Down   |
 
-> [!WARNING] If your external switch already adds pull to the input line, setting this setting
-> incorrectly could result in increased power consumption and other undefined behavior.
+> [!WARNING]
+>
+> If your external switch already adds pull to the input line, setting this setting incorrectly
+> could result in increased power consumption and other undefined behavior.
 
 ```json
 "external_switch_input_pull": {

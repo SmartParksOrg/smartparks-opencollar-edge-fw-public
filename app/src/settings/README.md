@@ -5,9 +5,11 @@ at build time from [settings.json](../../../scripts/settings/settings.json) allo
 modification when new HW or tracker is introduced. More on how [auto-generated](generated_settings)
 files are created is [described in settings scripts module](../../../scripts/settings/README.md).
 
-> [!IMPORTANT] The settings structure has changed for firmware versions equal or larger than v7.4.0.
-> From v7.4.0 onward the firmware uses a `family` byte which serves as user setting grouping. The
-> settings format changes slightly from:
+> [!IMPORTANT]
+>
+> The settings structure has changed for firmware versions equal or larger than v8.0.0. From v8.0.0
+> onward the firmware uses a `family` byte which serves as user setting grouping. The settings
+> format changes slightly from:
 >
 > `Port Id Length Data`
 >
@@ -18,14 +20,16 @@ files are created is [described in settings scripts module](../../../scripts/set
 > Important note: This change applies to settings and values. Commands, messages and ports (except
 > `port 3 - settings port`) stay the same.
 
-<--! -->
+<!-- -->
 
-> [!CAUTION] After old settings are transferred they are deleted from the NVS so if the device is
-> downgraded those settings won't be present anymore. Settings that were transferred will persist
-> though as well as any new additions will be transferred upon a new DFU upgrade.
+> [!CAUTION]
+>
+> After old settings are transferred they are deleted from the NVS so if the device is downgraded
+> those settings won't be present anymore. Settings that were transferred will persist though as
+> well as any new additions will be transferred upon a new DFU upgrade.
 >
 > Example: The user has a device with firmware which uses old settings, eg. LoRaWAN region (old ID
-> 0x0F), which is set `US915` (value 0x03); After performing a DFU upgrade to firmware >=v7.4.0, the
+> 0x0F), which is set `US915` (value 0x03); After performing a DFU upgrade to firmware >=v8.0.0, the
 > setting will be transferred to 0x0503 and deleted from 0x0F. If the user also has lr_gps_interval
 > (old ID 0x01) set to 60, it will be transferred to 0x0500 and deleted from 0x01.
 >
@@ -111,8 +115,10 @@ To set the above "settingname" example setting to value 1000, first convert 1000
 00 01 04 E8 03 00 00
 ```
 
-> [!IMPORTANT] All integer settings must be encoded in little-endian. Byte arrays are specified from
-> left to right ([see example below](#example-outdoor-detection-parameters)).
+> [!IMPORTANT]
+>
+> All integer settings must be encoded in little-endian. Byte arrays are specified from left to
+> right ([see example below](#example-outdoor-detection-parameters)).
 
 #### Example (Outdoor detection parameters)
 
@@ -511,8 +517,10 @@ all messages are send, confirmation message, "msg_cmd_confirm", will be received
 
 Read specific number of messages, starting from specified message from head on defined port.
 
-> [!NOTE] The flash head is always located at the last saved message in flash. The flash is read
-> from the last populated block backwards.
+> [!NOTE]
+>
+> The flash head is always located at the last saved message in flash. The flash is read from the
+> last populated block backwards.
 
 ```txt
 BC 0C [port_nr encoded as 4 bytes array] [start msg  nr. (from head) - 4 bytes] [nr. of messages - 4 bytes]
@@ -610,7 +618,9 @@ Up to 46 bytes are supported.
 
 ### C5 - cmd_read_all_lr_messages
 
-> [!NOTE] This command is used for debugging and only works when sent over Bluetooth.
+> [!NOTE]
+>
+> This command is used for debugging and only works when sent over Bluetooth.
 
 ```txt
 C5 00

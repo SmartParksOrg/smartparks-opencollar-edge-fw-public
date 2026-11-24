@@ -3,7 +3,7 @@
 
 #include <zephyr/kernel.h>
 
-/* Permanently reserved for settings written by firmware before v7.4.0. Never reuse this family. */
+/* Permanently reserved for settings written by firmware before v8.0.0. Never reuse this family. */
 #define SETTINGS_FAMILY_LEGACY 0x00
 
 /* Protected storage IDs. These IDs MUST NOT BE USED in the settings.json file (reserved_special) */
